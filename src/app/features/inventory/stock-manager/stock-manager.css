@@ -1,23 +1,33 @@
 :host {
   display: block;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  color: #e2e8f0;
-  background-color: #0f172a;
+  color: var(--text-main);
+  background: transparent;
   min-height: 100vh;
 }
 
 .dashboard-container {
   display: flex;
   min-height: 100vh;
+  background: transparent;
 }
 
 .sidebar {
-  width: 280px;
-  background-color: #1e293b;
-  border-right: 1px solid #334155;
+  width: 270px;
+  min-width: 270px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-right: 1px solid var(--border-subtle);
   padding: 1.5rem 0;
   display: flex;
   flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  z-index: 100;
 }
 
 .logo-container {
@@ -31,10 +41,10 @@
 .brand-logo-img {
   width: 44px;
   height: 44px;
-  border-radius: 10px;
+  border-radius: 12px;
   object-fit: cover;
-  border: 1.5px solid #10b981;
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+  border: 1.5px solid var(--accent-emerald);
+  box-shadow: 0 0 20px var(--accent-emerald-glow);
 }
 
 .logo-text {
@@ -46,13 +56,13 @@
 .brand-name {
   font-size: 1.4rem;
   font-weight: 800;
-  color: #f8fafc;
+  color: var(--text-main);
   letter-spacing: -0.5px;
 }
 
 .badge-pro {
   font-size: 0.7rem;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, var(--accent-emerald), #059669);
   color: white;
   padding: 0.15rem 0.5rem;
   border-radius: 20px;
@@ -68,38 +78,48 @@ nav ul {
 }
 
 nav li {
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.35rem;
   padding: 0 0.8rem;
 }
 
 nav a {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.85rem;
   padding: 0.75rem 1rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.9rem;
-  border-radius: 8px;
-  transition: all 0.2s;
+  border-radius: 10px;
+  transition: all 0.25s ease;
 }
 
-nav a:hover, nav li.active a {
-  background-color: #0f172a;
-  color: #3b82f6;
+nav a:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+}
+
+nav li.active a {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.12));
+  color: var(--accent-blue);
+  border-left: 3px solid var(--accent-blue);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
 }
 
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
+  background: transparent;
 }
 
 header {
   height: 80px;
-  background-color: #1e293b;
-  border-bottom: 1px solid #334155;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -113,15 +133,15 @@ header {
 }
 
 .company-selector label {
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 600;
 }
 
 .company-selector select {
-  background-color: #0f172a;
-  color: #10b981;
-  border: 1px solid #334155;
+  background: rgba(2, 6, 23, 0.7);
+  color: var(--accent-emerald);
+  border: 1px solid var(--border-medium);
   padding: 0.5rem 1rem;
   border-radius: 8px;
   font-size: 0.9rem;
@@ -137,17 +157,19 @@ header {
 .btn-logout {
   background-color: rgba(239, 68, 68, 0.15);
   color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.35);
   padding: 0.45rem 0.85rem;
   border-radius: 8px;
   font-weight: 700;
   font-size: 0.82rem;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn-logout:hover {
   background-color: #ef4444;
   color: white;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
 }
 
 .content {
@@ -167,21 +189,24 @@ header {
 }
 
 .card {
-  background-color: #1e293b;
-  border-radius: 14px;
+  background: var(--bg-surface);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 16px;
   padding: 1.6rem;
-  border: 1px solid #334155;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-md);
 }
 
 .card h3 {
   margin-top: 0;
   margin-bottom: 0.4rem;
   font-size: 1.1rem;
-  color: #f8fafc;
+  color: var(--text-main);
 }
 
 .card p {
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 0.85rem;
   margin-bottom: 1.2rem;
 }
@@ -194,33 +219,43 @@ header {
 
 .input-label {
   font-size: 0.82rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
   margin-bottom: -0.4rem;
+  font-weight: 600;
 }
 
 input, select {
-  background-color: #0f172a;
-  border: 1px solid #334155;
-  color: #f8fafc;
+  background: rgba(2, 6, 23, 0.7);
+  border: 1px solid var(--border-medium);
+  color: var(--text-main);
   padding: 0.65rem 1rem;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px var(--accent-blue-glow);
 }
 
 button {
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, var(--accent-emerald), #059669);
   color: white;
   border: none;
   padding: 0.65rem 1.2rem;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 700;
   font-size: 0.88rem;
   cursor: pointer;
   margin-top: 0.5rem;
+  transition: all 0.2s ease;
 }
 
 button:hover {
-  background-color: #34d399;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px var(--accent-emerald-glow);
 }
 
 .data-table {
@@ -231,28 +266,35 @@ button:hover {
 .data-table th, .data-table td {
   padding: 0.8rem 1rem;
   text-align: left;
-  border-bottom: 1px solid #334155;
+  border-bottom: 1px solid var(--border-subtle);
   font-size: 0.88rem;
 }
 
 .data-table th {
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-weight: 600;
   font-size: 0.78rem;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.data-table tr:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .price {
-  color: #10b981;
+  color: var(--accent-emerald);
   font-weight: 700;
 }
 
 .qty-badge {
-  background-color: #334155;
+  background: rgba(2, 6, 23, 0.6);
   padding: 0.25rem 0.7rem;
   border-radius: 6px;
   font-weight: 700;
   font-size: 0.82rem;
+  border: 1px solid var(--border-medium);
 }
 
 .stock-alert {
@@ -261,11 +303,11 @@ button:hover {
 }
 
 .stock-alert.danger {
-  color: #ef4444;
+  color: var(--accent-rose);
 }
 
 .empty-state {
   text-align: center;
-  padding: 2.5rem !important;
-  color: #64748b;
+  padding: 2.5rem;
+  color: var(--text-muted);
 }
