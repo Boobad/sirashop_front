@@ -1,0 +1,29 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { User } from './user.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UserService {
+  private apiUrl = 'http://localhost:8085/api/users';
+
+  constructor(private http: HttpClient) { }
+
+  createUser(user: User): Observable<User> {
+    return this.http.post<User>(this.apiUrl, user);
+  }
+
+  changePassword(userId: number, oldPassword: string, newPassword: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/change-password`, { userId, oldPassword, newPassword });
+  }
+
+  getUsersByCompany(companyId: number): Observable<User[]> {
+    return this.http.get<User[]>(`${this.apiUrl}/company/${companyId}`);
+  }
+
+  getUsersByShop(shopId: number): Observable<User[]> {
+    return this.http.get<User[]>(`${this.apiUrl}/shop/${shopId}`);
+  }
+}

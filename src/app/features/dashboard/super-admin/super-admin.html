@@ -1,0 +1,316 @@
+<div class="dashboard-container">
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar">
+    <div class="logo-container">
+      <img src="assets/logo.png" alt="SiraShop Logo" class="brand-logo-img">
+      <div class="logo-text">
+        <span class="brand-name">SiraShop</span>
+        <span class="badge-saas">SaaS HQ</span>
+      </div>
+    </div>
+
+    <nav>
+      <ul>
+        <li [class.active]="activeTab === 'companies'">
+          <a (click)="setTab('companies')">
+            <span class="icon">🏛️</span>
+            <span>Entreprises Clients</span>
+          </a>
+        </li>
+        <li [class.active]="activeTab === 'payments'">
+          <a (click)="setTab('payments')">
+            <span class="icon">💳</span>
+            <span>Encaisser Abonnements</span>
+          </a>
+        </li>
+        <li [class.active]="activeTab === 'stats'">
+          <a (click)="setTab('stats')">
+            <span class="icon">📊</span>
+            <span>Statistiques Éditeur</span>
+          </a>
+        </li>
+        <li [class.active]="activeTab === 'admins'">
+          <a (click)="setTab('admins')">
+            <span class="icon">👑</span>
+            <span>Administrateurs</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT AREA -->
+  <main class="main-content">
+    <header class="top-header">
+      <div class="header-left">
+        <h1>Panneau d'Administration SiraShop</h1>
+        <p class="subtitle">Gestion centrale des abonnements et entreprises clientes</p>
+      </div>
+
+      <div class="user-info">
+        <span>👤 <strong>{{ currentUser?.username }}</strong> ({{ currentUser?.role }})</span>
+        <button class="btn-logout" (click)="logout()">Déconnexion 🚪</button>
+      </div>
+    </header>
+
+    <section class="content">
+
+      <!-- BANNIERE D'ALERTE DE SUCCES -->
+      <div *ngIf="successMessage" class="alert-banner">
+        <span>{{ successMessage }}</span>
+      </div>
+
+      <!-- MODAL ENCAISSEMENT ABONNEMENT -->
+      <div *ngIf="selectedCompanyForPayment" class="modal-backdrop">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h3>💳 Règlement d'Abonnement Mensuel</h3>
+            <p>Client : <strong>{{ selectedCompanyForPayment.name }}</strong></p>
+          </div>
+
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Mois d'Abonnement :</label>
+              <select [(ngModel)]="payMonth" class="custom-input">
+                <option *ngFor="let m of months" [value]="m">{{ m }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Montant Encaissé (FCFA) :</label>
+              <input type="number" [(ngModel)]="payAmount" class="custom-input" placeholder="30000">
+            </div>
+
+            <div class="form-group">
+              <label>Référence / Note de versement :</label>
+              <input type="text" [(ngModel)]="payNotes" class="custom-input" placeholder="ex: Versement Orange Money / Espèces...">
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-secondary" (click)="cancelPayment()">Annuler</button>
+            <button class="btn-emerald" (click)="submitPayment()">
+              <span>Enregistrer & Valider</span> ✨
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONGLET 1 : ENTREPRISES & ABONNEMENTS -->
+      <div *ngIf="activeTab === 'companies'">
+        <!-- CARTE D'INSCRIPTION SIMULTANEE (ENTREPRISE + PROPRIETAIRE) -->
+        <div class="action-card">
+          <div class="card-icon">➕</div>
+          <div class="card-body">
+            <h3>Inscrire une nouvelle Entreprise Cliente & Son Compte Propriétaire</h3>
+            <p>Créez l'entreprise et générez directement l'identifiant et mot de passe par défaut du Boss</p>
+
+            <div class="grid-inputs-3 margin-top">
+              <div class="form-group">
+                <label>Nom de l'Entreprise :</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="newCompanyName" 
+                  placeholder="ex: MDS, Boutique Sira..."
+                  class="custom-input"
+                >
+              </div>
+
+              <div class="form-group">
+                <label>Identifiant du Propriétaire (Boss) :</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="newOwnerUsername" 
+                  placeholder="ex: mds_boss, mamadou..."
+                  class="custom-input"
+                >
+              </div>
+
+              <div class="form-group">
+                <label>Mot de passe par défaut :</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="newOwnerPassword" 
+                  placeholder="ex: mds123..."
+                  class="custom-input"
+                >
+              </div>
+            </div>
+
+            <button class="btn-primary margin-top-sm" (click)="createCompany()">
+              ✨ Inscrire l'Entreprise & Créer le Compte Boss
+            </button>
+          </div>
+        </div>
+
+        <!-- TABLEAU DES ENTREPRISES -->
+        <div class="table-container margin-top">
+          <div class="table-header-title">
+            <h3>🏢 Entreprises Inscrites & Abonnements ({{ companies.length }})</h3>
+          </div>
+
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nom de l'Entreprise</th>
+                <th>Statut d'Abonnement</th>
+                <th>Encaissement</th>
+                <th>Contrôle d'Accès</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of companies" class="table-row">
+                <td class="cell-id">#{{ c.id }}</td>
+                <td class="cell-name"><strong>{{ c.name }}</strong></td>
+                <td>
+                  <span class="status-pill" [class.active]="c.active" [class.blocked]="!c.active">
+                    {{ c.active ? '🟢 Abonnement Actif' : '🔴 Accès Suspendu' }}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn-action-pay" (click)="openPaymentModal(c)">
+                    💳 Payer (30k F)
+                  </button>
+                </td>
+                <td>
+                  <button 
+                    class="btn-action-status" 
+                    [class.btn-suspend]="c.active" 
+                    [class.btn-activate]="!c.active"
+                    (click)="toggleCompany(c)"
+                  >
+                    {{ c.active ? '🛑 Suspendre' : '✅ Débloquer' }}
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="companies.length === 0">
+                <td colspan="5" class="empty-state">Aucune entreprise cliente enregistrée.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ONGLET 2 : ENCAISSER / PAIEMENTS REÇUS -->
+      <div *ngIf="activeTab === 'payments'">
+        <div class="table-container">
+          <div class="table-header-title">
+            <h3>💳 Journal des Cotisations d'Abonnements Recueillies ({{ payments.length }})</h3>
+          </div>
+
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>Paiement #</th>
+                <th>Entreprise</th>
+                <th>Période Réglée</th>
+                <th>Montant Verse</th>
+                <th>Date d'Encaissement</th>
+                <th>Notes / Référence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of payments" class="table-row">
+                <td class="cell-id">#{{ p.id }}</td>
+                <td class="cell-name"><strong>{{ p.companyName }}</strong></td>
+                <td><span class="period-badge">📅 {{ p.periodMonth }} {{ p.periodYear }}</span></td>
+                <td><strong class="amount-green">{{ p.amount }} FCFA</strong></td>
+                <td class="cell-date">{{ p.paymentDate | date:'short' }}</td>
+                <td class="cell-notes">{{ p.notes || '-' }}</td>
+              </tr>
+              <tr *ngIf="payments.length === 0">
+                <td colspan="6" class="empty-state">Aucun paiement d'abonnement n'a encore été enregistré.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ONGLET 3 : STATISTIQUES SAAS -->
+      <div *ngIf="activeTab === 'stats'">
+        <div *ngIf="stats" class="kpi-grid">
+          <div class="kpi-card gold-border">
+            <div class="kpi-icon">🔮</div>
+            <div class="kpi-content">
+              <div class="kpi-label">Revenu Mensuel Espéré (Recouvrement)</div>
+              <div class="kpi-number text-gold">{{ stats.expectedMonthlyRevenue || 0 }} FCFA</div>
+              <div class="kpi-desc">Calcul : {{ stats.totalCompanies }} clients × {{ stats.monthlyTariff }} FCFA/mois</div>
+            </div>
+          </div>
+
+          <div class="kpi-card green-border">
+            <div class="kpi-icon">💰</div>
+            <div class="kpi-content">
+              <div class="kpi-label">CA Abonnements Encaissés (SiraShop)</div>
+              <div class="kpi-number text-green">{{ stats.totalSubscriptionRevenue || 0 }} FCFA</div>
+              <div class="kpi-desc">Total des abonnements perçus en caisse SaaS</div>
+            </div>
+          </div>
+
+          <div class="kpi-card blue-border">
+            <div class="kpi-icon">🏢</div>
+            <div class="kpi-content">
+              <div class="kpi-label">Entreprises Clients</div>
+              <div class="kpi-number text-blue">{{ stats.totalCompanies }}</div>
+              <div class="kpi-desc">{{ stats.activeCompanies }} actives | {{ stats.blockedCompanies }} suspendues</div>
+            </div>
+          </div>
+
+          <div class="kpi-card purple-border">
+            <div class="kpi-icon">🏪</div>
+            <div class="kpi-content">
+              <div class="kpi-label">Réseau Opérationnel</div>
+              <div class="kpi-number text-purple">{{ stats.totalShops }} Boutiques</div>
+              <div class="kpi-desc">{{ stats.totalUsers }} comptes utilisateurs créés</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONGLET 4 : GESTION DES ADMINS -->
+      <div *ngIf="activeTab === 'admins'">
+        <div class="grid-2">
+          <div class="action-card">
+            <div class="card-icon">👑</div>
+            <div class="card-body">
+              <h3>Créer un autre Administrateur</h3>
+              <p>Donnez les droits Super Admin à un membre de l'équipe SiraShop</p>
+              
+              <div class="vertical-form">
+                <input type="text" [(ngModel)]="newAdminUsername" placeholder="Identifiant (ex: admin2)..." class="custom-input">
+                <input type="password" [(ngModel)]="newAdminPassword" placeholder="Mot de passe..." class="custom-input">
+                <button class="btn-primary" (click)="createAdmin()">Créer le Super Admin</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <div class="table-header-title">
+              <h3>Comptes Administrateurs ({{ admins.length }})</h3>
+            </div>
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Identifiant</th>
+                  <th>Rôle</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let a of admins" class="table-row">
+                  <td class="cell-id">#{{ a.id }}</td>
+                  <td class="cell-name"><strong>{{ a.username }}</strong></td>
+                  <td><span class="role-badge-gold">{{ a.role }}</span></td>
+                  <td><span class="status-pill active">🟢 Actif</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+</div>

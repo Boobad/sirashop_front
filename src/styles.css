@@ -1,0 +1,133 @@
+/* Global Styles for SiraShop */
+:root {
+  --bg-dark: #0f172a;
+  --card-dark: #1e293b;
+  --border-dark: #334155;
+  --primary-blue: #3b82f6;
+  --primary-green: #10b981;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  height: 100%;
+}
+
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  align-items: stretch;
+}
+
+/* SIDEBAR RESTE FIXE AU SCROLL */
+.sidebar {
+  width: 280px !important;
+  min-width: 280px !important;
+  background-color: #1e293b !important;
+  border-right: 1px solid #334155 !important;
+  padding: 1.5rem 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: sticky !important;
+  top: 0 !important;
+  height: 100vh !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+  z-index: 100 !important;
+}
+
+.main-content {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+}
+
+/* BRAND LOGO IMAGE UNIFIE */
+.brand-logo-img {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  border-radius: 10px !important;
+  object-fit: cover !important;
+  border: 1.5px solid #3b82f6 !important;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3) !important;
+  display: block !important;
+}
+
+.logo-container {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.8rem !important;
+  padding: 0 1.2rem !important;
+  margin-bottom: 1.8rem !important;
+}
+
+.logo-text {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.15rem !important;
+}
+
+.brand-name {
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  color: #f8fafc !important;
+  letter-spacing: -0.5px !important;
+}
+
+/* USER INFO & LOGOUT */
+.user-info {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.8rem !important;
+  background-color: #0f172a !important;
+  padding: 0.4rem 0.8rem !important;
+  border-radius: 10px !important;
+  border: 1px solid #334155 !important;
+  font-size: 0.88rem !important;
+}
+
+.btn-logout {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  padding: 0.45rem 0.85rem !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  font-size: 0.82rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+}
+
+.btn-logout:hover {
+  background-color: #ef4444 !important;
+  color: white !important;
+  border-color: #ef4444 !important;
+}
+
+.btn-pwd {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  color: #60a5fa !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+  padding: 0.45rem 0.85rem !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  font-size: 0.82rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-pwd:hover {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}

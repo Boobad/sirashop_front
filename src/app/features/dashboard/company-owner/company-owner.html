@@ -1,0 +1,236 @@
+<div class="dashboard-container">
+  <aside class="sidebar">
+    <div class="logo-container">
+      <img src="assets/logo.png" alt="SiraShop Logo" class="brand-logo-img">
+      <div class="logo-text">
+        <span class="brand-name">SiraShop</span>
+        <span class="badge-pro">Pro Owner</span>
+      </div>
+    </div>
+    <nav>
+      <ul>
+        <li class="active"><a routerLink="/company-owner">🏢 Espace Propriétaire</a></li>
+        <li><a routerLink="/stock">📦 Stocks & Catalogues</a></li>
+        <li><a routerLink="/pos">🛒 Caisse POS (Vendeur)</a></li>
+        <li><a routerLink="/repair">🛠️ Atelier SAV</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <header>
+      <div class="company-selector">
+        <label>Entreprise gérée : </label>
+        <select [(ngModel)]="selectedCompanyId" (change)="onCompanyChange()" [disabled]="currentUser?.role === 'COMPANY_OWNER'">
+          <option *ngFor="let c of companies" [value]="c.id">{{ c.name }}</option>
+        </select>
+      </div>
+      <div class="user-info">
+        <span>👤 <strong>{{ currentUser?.username }}</strong> ({{ currentUser?.role }})</span>
+        <button class="btn-pwd" (click)="openPasswordModal()">🔒 Sécurité / Mot de passe</button>
+        <button class="btn-logout" (click)="logout()">Déconnexion 🚪</button>
+      </div>
+    </header>
+
+    <section class="content">
+
+      <!-- MODAL CHANGEMENT DE MOT DE PASSE -->
+      <div *ngIf="showPasswordModal" class="modal-backdrop">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h3>🔒 Modifier mon mot de passe</h3>
+            <p>Utilisateur : <strong>{{ currentUser?.username }}</strong></p>
+          </div>
+
+          <div *ngIf="passwordSuccess" class="alert alert-success">{{ passwordSuccess }}</div>
+          <div *ngIf="passwordError" class="alert alert-danger">{{ passwordError }}</div>
+
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Ancien mot de passe :</label>
+              <input type="password" [(ngModel)]="oldPasswordInput" class="custom-input" placeholder="••••••••">
+            </div>
+
+            <div class="form-group">
+              <label>Nouveau mot de passe :</label>
+              <input type="password" [(ngModel)]="newPasswordInput" class="custom-input" placeholder="••••••••">
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-secondary" (click)="closePasswordModal()">Annuler</button>
+            <button class="btn-primary" (click)="submitChangePassword()">Changer mon mot de passe</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 0 : CARTE DE STATISTIQUES FINANCIERES (KPIS) -->
+      <div *ngIf="stats" class="kpi-grid">
+        <div class="kpi-card total">
+          <div class="kpi-title">💰 Chiffre d'Affaires Total</div>
+          <div class="kpi-value">{{ stats.totalRevenue || 0 }} FCFA</div>
+          <div class="kpi-sub">Total Ventes + Réparations</div>
+        </div>
+
+        <div class="kpi-card sales">
+          <div class="kpi-title">🛒 Ventes d'Articles</div>
+          <div class="kpi-value">{{ stats.salesRevenue || 0 }} FCFA</div>
+          <div class="kpi-sub">{{ stats.totalSalesCount || 0 }} transactions en caisse</div>
+        </div>
+
+        <div class="kpi-card repairs">
+          <div class="kpi-title">🛠️ Réparations SAV</div>
+          <div class="kpi-value">{{ stats.repairRevenue || 0 }} FCFA</div>
+          <div class="kpi-sub">{{ stats.totalRepairsCount || 0 }} appareils réparés</div>
+        </div>
+      </div>
+
+      <!-- TABLEAU COMPARATIF DES PERFORMANCES PAR BOUTIQUE -->
+      <div *ngIf="stats && stats.shopStats && stats.shopStats.length > 0" class="card margin-top">
+        <h3>📊 Comparatif des Performances par Boutique</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Boutique</th>
+              <th>CA Ventes</th>
+              <th>Nb Ventes</th>
+              <th>CA Réparations</th>
+              <th>Nb Réparations</th>
+              <th>CA Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of stats.shopStats">
+              <td><strong>{{ s.shopName }}</strong></td>
+              <td><span class="text-green">{{ s.salesRevenue || 0 }} FCFA</span></td>
+              <td>{{ s.salesCount || 0 }}</td>
+              <td><span class="text-purple">{{ s.repairRevenue || 0 }} FCFA</span></td>
+              <td>{{ s.repairsCount || 0 }}</td>
+              <td><strong class="text-gold">{{ s.totalRevenue || 0 }} FCFA</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SECTION 1 : JOURNAL ET AUDIT DES VENTES PAR VENDEUR / CAISSIER -->
+      <div class="card margin-top">
+        <h3>🛒 Journal d'Audit des Ventes Réalisées par Vendeur ({{ sales.length }})</h3>
+        <p>Affiche chaque transaction enregistrée en caisse avec le nom du caissier et la boutique</p>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#Vente</th>
+              <th>Boutique</th>
+              <th>Vendeur / Caissier</th>
+              <th>Mode de Règlement</th>
+              <th>Montant Total</th>
+              <th>Date & Heure</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of sales">
+              <td>#{{ s.id }}</td>
+              <td><strong>{{ s.shopName || getShopName(s.shopId) }}</strong></td>
+              <td><span class="seller-badge">👤 {{ s.sellerUsername }}</span></td>
+              <td>
+                <span class="payment-badge">{{ s.paymentMethod || 'CASH' }}</span>
+              </td>
+              <td><strong class="text-green">{{ s.totalAmount }} FCFA</strong></td>
+              <td>{{ s.createdAt | date:'medium' }}</td>
+            </tr>
+            <tr *ngIf="sales.length === 0">
+              <td colspan="6" class="empty-state">Aucune vente enregistrée pour le moment.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SECTION 2 : GESTION DES BOUTIQUES & EMPLOYES -->
+      <div class="grid-2 margin-top">
+        <div class="card">
+          <h3>🏪 Ajouter une nouvelle boutique / point de vente</h3>
+          <p>Créez un magasin physique ou un atelier de réparation</p>
+          
+          <div class="form-vertical">
+            <input type="text" [(ngModel)]="newShopName" placeholder="Nom (ex: Boutique Centre-Ville, Atelier SAV)...">
+            <input type="text" [(ngModel)]="newShopAddress" placeholder="Adresse / Emplacement (ex: Grand Marché, Rue 12)...">
+            <button (click)="createShop()">Créer la boutique</button>
+          </div>
+
+          <h4 class="margin-top">Vos Boutiques ({{ shops.length }})</h4>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Adresse</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s of shops">
+                <td>#{{ s.id }}</td>
+                <td><strong>{{ s.name }}</strong></td>
+                <td>{{ s.address || 'Non spécifiée' }}</td>
+              </tr>
+              <tr *ngIf="shops.length === 0">
+                <td colspan="3" class="empty-state">Aucune boutique créée pour l'instant.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h3>👥 Créer un compte Employé (Vendeur, Technicien, Gestionnaire)</h3>
+          <p>Créez un accès pour un employé et assignez-le à une boutique</p>
+          
+          <div class="form-vertical">
+            <input type="text" [(ngModel)]="newUsername" placeholder="Identifiant (ex: vendeur_moussa)...">
+            <input type="password" [(ngModel)]="newPassword" placeholder="Mot de passe...">
+            
+            <label class="input-label">Rôle de l'employé :</label>
+            <select [(ngModel)]="newRole">
+              <option value="SELLER">🛒 Vendeur (Caisse / Ventes)</option>
+              <option value="TECHNICIAN">🛠️ Technicien (Atelier SAV)</option>
+              <option value="MANAGER">📦 Gestionnaire de Boutique</option>
+            </select>
+
+            <label class="input-label">Assigner à la Boutique :</label>
+            <select [(ngModel)]="selectedShopId">
+              <option [ngValue]="null">Aucune (Toutes les boutiques)</option>
+              <option *ngFor="let s of shops" [value]="s.id">{{ s.name }}</option>
+            </select>
+
+            <button (click)="createUser()">Créer le compte employé</button>
+          </div>
+
+          <h4 class="margin-top">Annuaire des Employés ({{ users.length }})</h4>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Identifiant</th>
+                <th>Rôle</th>
+                <th>Boutique d'Affectation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let u of users">
+                <td><strong>{{ u.username }}</strong></td>
+                <td>
+                  <span class="role-badge" [class.technician]="u.role === 'TECHNICIAN'" [class.seller]="u.role === 'SELLER'" [class.owner]="u.role === 'COMPANY_OWNER'">
+                    {{ u.role === 'SELLER' ? '🛒 Vendeur' : (u.role === 'TECHNICIAN' ? '🛠️ Technicien' : (u.role === 'COMPANY_OWNER' ? '👑 Boss' : u.role)) }}
+                  </span>
+                </td>
+                <td>{{ getShopName(u.shopId) }}</td>
+              </tr>
+              <tr *ngIf="users.length === 0">
+                <td colspan="3" class="empty-state">Aucun employé créé pour le moment.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+  </main>
+</div>

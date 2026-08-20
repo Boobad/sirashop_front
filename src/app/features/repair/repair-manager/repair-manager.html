@@ -1,0 +1,112 @@
+<div class="dashboard-container">
+  <aside class="sidebar">
+    <div class="logo-container">
+      <img src="assets/logo.png" alt="SiraShop Logo" class="brand-logo-img">
+      <div class="logo-text">
+        <span class="brand-name">SiraShop</span>
+        <span class="badge-pro">Atelier SAV</span>
+      </div>
+    </div>
+    <nav>
+      <ul>
+        <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'SUPER_ADMIN'">
+          <a routerLink="/company-owner">🏢 Espace Propriétaire</a>
+        </li>
+        <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'MANAGER' || currentUser?.role === 'SUPER_ADMIN'">
+          <a routerLink="/stock">📦 Stocks & Catalogues</a>
+        </li>
+        <li *ngIf="currentUser?.role !== 'TECHNICIAN'">
+          <a routerLink="/pos">🛒 Caisse POS (Vendeur)</a>
+        </li>
+        <li class="active"><a routerLink="/repair">🛠️ Atelier SAV (Réparations)</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <header>
+      <div class="shop-selector">
+        <label>Boutique / Atelier : </label>
+        <select [(ngModel)]="selectedShopId" (change)="onShopChange()">
+          <option *ngFor="let s of shops" [value]="s.id">{{ s.name }}</option>
+        </select>
+      </div>
+      <div class="user-info">
+        <span>👤 <strong>{{ currentUser?.username }}</strong> ({{ currentUser?.role }})</span>
+        <button class="btn-logout" (click)="logout()">Déconnexion 🚪</button>
+      </div>
+    </header>
+
+    <section class="content">
+      <div class="grid-2">
+        <!-- FORMULAIRE DE RECEPTION D'UN APPAREIL EN PANNE -->
+        <div class="card">
+          <h3>📝 Fiche de Dépôt Réparation</h3>
+          <p>Enregistrez un appareil déposé par un client en panne</p>
+
+          <div class="form-vertical">
+            <input type="text" [(ngModel)]="customerName" placeholder="Nom complet du client (ex: Mamadou Coulibaly)...">
+            <input type="text" [(ngModel)]="customerPhone" placeholder="Téléphone du client (ex: +223 70 00 00 00)...">
+            <input type="text" [(ngModel)]="deviceModel" placeholder="Modèle d'appareil (ex: iPhone 11 64GB, Samsung S21)...">
+            <textarea [(ngModel)]="issueDescription" placeholder="Description de la panne (ex: Écran cassé, problème de batterie)..." rows="3"></textarea>
+
+            <div class="grid-inputs">
+              <div>
+                <label class="input-label">Prix Total Estimé (FCFA) :</label>
+                <input type="number" [(ngModel)]="estimatedPrice" placeholder="ex: 35000">
+              </div>
+              <div>
+                <label class="input-label">Acompte Payé (FCFA) :</label>
+                <input type="number" [(ngModel)]="depositAmount" placeholder="ex: 15000">
+              </div>
+            </div>
+
+            <label class="input-label">Technicien Assigné :</label>
+            <select [(ngModel)]="selectedTechnicianId">
+              <option [ngValue]="null">Aucun (En attente d'attribution)</option>
+              <option *ngFor="let t of technicians" [value]="t.id">{{ t.username }}</option>
+            </select>
+
+            <button (click)="createTicket()">Créer le Ticket de Dépôt</button>
+          </div>
+        </div>
+
+        <!-- LISTE ET SUIVI DES TICKETS SAV -->
+        <div class="card">
+          <h3>🛠️ Suivi des Réparations en Cours ({{ tickets.length }})</h3>
+          <p>Modifiez le statut d'une réparation en 1 clic</p>
+
+          <div class="tickets-list">
+            <div *ngFor="let t of tickets" class="ticket-card">
+              <div class="ticket-header">
+                <div class="ticket-title">Ticket #{{ t.id }} — {{ t.deviceModel }}</div>
+                <div class="ticket-client">👤 {{ t.customerName }} (📞 {{ t.customerPhone }})</div>
+              </div>
+
+              <div class="ticket-issue">
+                <strong>Panne :</strong> {{ t.issueDescription || 'Non spécifiée' }}
+              </div>
+
+              <div class="ticket-financials">
+                <span>Prix: <strong>{{ t.estimatedPrice || 0 }} FCFA</strong></span>
+                <span class="margin-left">Acompte: <strong class="deposit">{{ t.depositAmount || 0 }} FCFA</strong></span>
+                <span class="margin-left">Reste: <strong class="remaining">{{ (t.estimatedPrice || 0) - (t.depositAmount || 0) }} FCFA</strong></span>
+              </div>
+
+              <div class="ticket-actions">
+                <label>Changer le Statut : </label>
+                <select [ngModel]="t.status" (change)="onStatusChange(t, $event)" class="status-select">
+                  <option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</option>
+                </select>
+              </div>
+            </div>
+
+            <div *ngIf="tickets.length === 0" class="empty-state">
+              Aucun ticket de réparation enregistré pour cette boutique.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>

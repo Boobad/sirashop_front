@@ -1,0 +1,143 @@
+<div class="dashboard-container">
+  <aside class="sidebar">
+    <div class="logo-container">
+      <img src="assets/logo.png" alt="SiraShop Logo" class="brand-logo-img">
+      <div class="logo-text">
+        <span class="brand-name">SiraShop</span>
+        <span class="badge-pro">Stock Manager</span>
+      </div>
+    </div>
+    <nav>
+      <ul>
+        <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'SUPER_ADMIN'">
+          <a routerLink="/company-owner">🏢 Espace Propriétaire</a>
+        </li>
+        <li class="active"><a routerLink="/stock">📦 Stocks & Catalogues</a></li>
+        <li *ngIf="currentUser?.role !== 'TECHNICIAN'">
+          <a routerLink="/pos">🛒 Caisse POS (Vendeur)</a>
+        </li>
+        <li *ngIf="currentUser?.role === 'TECHNICIAN' || currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'SUPER_ADMIN'">
+          <a routerLink="/repair">🛠️ Atelier SAV</a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <header>
+      <div class="company-selector">
+        <label>Entreprise : </label>
+        <select [(ngModel)]="selectedCompanyId" (change)="onCompanyChange()" [disabled]="currentUser?.role === 'SELLER' || currentUser?.role === 'MANAGER' || currentUser?.role === 'COMPANY_OWNER'">
+          <option *ngFor="let c of companies" [value]="c.id">{{ c.name }}</option>
+        </select>
+      </div>
+      <div class="user-info">
+        <span>👤 <strong>{{ currentUser?.username }}</strong> ({{ currentUser?.role }})</span>
+        <button class="btn-logout" (click)="logout()">Déconnexion 🚪</button>
+      </div>
+    </header>
+
+    <section class="content">
+      <!-- SECTION 1 : CATALOGUE DES PRODUITS GLOBAL -->
+      <div class="grid-2">
+        <div class="card">
+          <h3>📱 Ajouter un produit au Catalogue</h3>
+          <p>Créez un article (téléphone, accessoire...) vendu par l'entreprise</p>
+          
+          <div class="form-vertical">
+            <input type="text" [(ngModel)]="newProductName" placeholder="Nom de l'article (ex: iPhone 13 128GB, Chargeur 20W)...">
+            <input type="number" [(ngModel)]="newPurchasePrice" placeholder="Prix d'Achat (CFA / €)...">
+            <input type="number" [(ngModel)]="newSellingPrice" placeholder="Prix de Vente Client (CFA / €)...">
+            
+            <label class="input-label">Boutique de destination :</label>
+            <select [(ngModel)]="selectedShopId" (change)="onShopChange()">
+              <option *ngFor="let s of shops" [value]="s.id">{{ s.name }}</option>
+            </select>
+
+            <label class="input-label">Quantité Achetée / En Stock Initial :</label>
+            <input type="number" [(ngModel)]="newInitialQuantity" placeholder="Quantité (ex: 50)">
+
+            <button (click)="createProduct()">Ajouter l'Article & Son Stock</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Catalogue de l'Entreprise ({{ products.length }})</h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Article</th>
+                <th>Prix Vente</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of products">
+                <td><strong>{{ p.name }}</strong></td>
+                <td><span class="price">{{ p.sellingPrice }} FCFA</span></td>
+              </tr>
+              <tr *ngIf="products.length === 0">
+                <td colspan="2" class="empty-state">Aucun produit dans le catalogue.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECTION 2 : STOCK PAR BOUTIQUE -->
+      <div class="grid-2 margin-top">
+        <div class="card">
+          <h3>📦 Alimenter le Stock d'une Boutique</h3>
+          <p>Fixez la quantité d'un article disponible dans un point de vente</p>
+          
+          <div class="form-vertical">
+            <label class="input-label">Sélectionner la Boutique :</label>
+            <select [(ngModel)]="selectedShopId" (change)="onShopChange()">
+              <option *ngFor="let s of shops" [value]="s.id">{{ s.name }}</option>
+            </select>
+
+            <label class="input-label">Sélectionner le Produit :</label>
+            <select [(ngModel)]="selectedProductId">
+              <option *ngFor="let p of products" [value]="p.id">{{ p.name }} ({{ p.sellingPrice }} FCFA)</option>
+            </select>
+
+            <label class="input-label">Quantité en Stock :</label>
+            <input type="number" [(ngModel)]="stockQuantity" placeholder="Quantité (ex: 50)">
+
+            <label class="input-label">Seuil d'Alerte Stock Bas :</label>
+            <input type="number" [(ngModel)]="alertThreshold" placeholder="Seuil (ex: 5)">
+
+            <button (click)="updateStock()">Mettre à jour le Stock</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Stock de la Boutique Sélectionnée ({{ inventories.length }})</h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th>Quantité en Stock</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let inv of inventories">
+                <td><strong>{{ inv.productName }}</strong></td>
+                <td><span class="qty-badge">{{ inv.quantity }} unités</span></td>
+                <td>
+                  <span class="stock-alert" [class.danger]="inv.quantity <= (inv.alertThreshold || 5)">
+                    {{ inv.quantity <= (inv.alertThreshold || 5) ? '⚠️ Stock Faible' : '✅ En Stock' }}
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="inventories.length === 0">
+                <td colspan="3" class="empty-state">Aucun stock configuré pour cette boutique.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+  </main>
+</div>
