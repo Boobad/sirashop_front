@@ -4,7 +4,7 @@
       <img src="assets/logo.png" alt="SiraShop Logo" class="brand-logo-img">
       <div class="logo-text">
         <span class="brand-name">SiraShop</span>
-        <span class="badge-pro">Caisse POS</span>
+        <span class="badge-pro">Caisse & Ventes</span>
       </div>
     </div>
     <nav>
@@ -13,14 +13,14 @@
           <a routerLink="/company-owner">🏢 Espace Propriétaire</a>
         </li>
         <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'SUPER_ADMIN'">
-          <a routerLink="/advanced-dashboard">📊 Dashboard Avancé</a>
+          <a routerLink="/advanced-dashboard">📊 Tableau de Bord</a>
         </li>
         <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'MANAGER' || currentUser?.role === 'SUPER_ADMIN'">
-          <a routerLink="/stock">📦 Stocks & Catalogues</a>
+          <a routerLink="/stock">📦 Produits & Stock</a>
         </li>
-        <li class="active"><a routerLink="/pos">🛒 Caisse POS (Vendeur)</a></li>
+        <li class="active"><a routerLink="/pos">🛒 Caisse & Ventes</a></li>
         <li *ngIf="currentUser?.role === 'TECHNICIAN' || currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'SUPER_ADMIN'">
-          <a routerLink="/repair">🛠️ Atelier SAV</a>
+          <a routerLink="/repair">🛠️ Réparations & SAV</a>
         </li>
       </ul>
     </nav>
@@ -34,7 +34,7 @@
           <option *ngFor="let s of shops" [value]="s.id">{{ s.name }}</option>
         </select>
 
-        <label class="margin-left">Vendeur : </label>
+        <label class="margin-left">Vendeur / Caissier : </label>
         <select [(ngModel)]="selectedSellerId" [disabled]="currentUser?.role === 'SELLER'">
           <option *ngFor="let u of sellers" [value]="u.id">{{ u.username }} ({{ u.role }})</option>
         </select>
@@ -47,15 +47,12 @@
 
     <section class="content">
 
-      <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
-      <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
-
       <!-- MODAL VERIFICATION DES STOCKS INTER-BOUTIQUES (RESEAU) -->
       <div *ngIf="showNetworkModal" class="modal-backdrop">
         <div class="modal-box network-modal">
           <div class="modal-header">
             <h3>🔎 Disponibilité Réseau Inter-Boutiques</h3>
-            <p>Article recherché : <strong>{{ selectedProductForNetwork?.productName }}</strong> ({{ selectedProductForNetwork?.sellingPrice }} FCFA)</p>
+            <p>Article recherché : <strong>{{ selectedProductForNetwork?.productName }}</strong> ({{ selectedProductForNetwork?.sellingPrice | fcfa }})</p>
           </div>
 
           <div class="modal-body">
@@ -86,7 +83,7 @@
                     <td>{{ inv.shopAddress || 'Non spécifiée' }}</td>
                     <td>
                       <span class="qty-pill" [class.available]="inv.quantity > 0" [class.empty]="inv.quantity <= 0">
-                        {{ inv.quantity > 0 ? '✅ ' + inv.quantity + ' en stock' : '❌ Rupture (0)' }}
+                        {{ inv.quantity > 0 ? '✅ ' + inv.quantity + ' en stock' : '❌ Rupture de stock (0)' }}
                       </span>
                     </td>
                     <td>
@@ -123,7 +120,7 @@
               <input 
                 type="text" 
                 [(ngModel)]="searchQuery" 
-                placeholder="🔍 Rechercher un produit (ex: Chargeur)..."
+                placeholder="🔍 Rechercher un produit (ex: Chargeur, iPhone)..."
                 class="search-input"
               >
             </div>
@@ -138,17 +135,17 @@
             >
               <div class="product-card-top">
                 <div class="product-title">{{ p.productName }}</div>
-                <div class="product-price">{{ p.sellingPrice }} FCFA</div>
+                <div class="product-price">{{ p.sellingPrice | fcfa }}</div>
                 <div class="product-stock" [class.out-of-stock]="p.quantity <= 0">
-                  {{ p.quantity > 0 ? 'Stock: ' + p.quantity + ' unités' : '⚠️ Rupture ici (0)' }}
+                  {{ p.quantity > 0 ? 'En stock : ' + p.quantity + ' unités' : '⚠️ Rupture de stock (0)' }}
                 </div>
               </div>
 
               <div class="product-card-actions">
                 <button class="btn-network-check" (click)="openNetworkStockModal(p, $event)" title="Vérifier dans les autres boutiques de l'entreprise">
-                  🔍 Vérifier dans une autre boutique
+                  🔍 Vérifier autre boutique
                 </button>
-                <div class="product-add">{{ p.quantity > 0 ? '+ Vendre au panier' : '⚠️ Cliquer pour chercher' }}</div>
+                <div class="product-add">{{ p.quantity > 0 ? '+ Ajouter au panier' : '⚠️ Vérifier réseau' }}</div>
               </div>
             </div>
 
@@ -160,7 +157,12 @@
 
         <!-- PANIER / CAISSE / DETAIL D'ACHAT -->
         <div class="card checkout-card">
-          <h3>🛒 Détails de la Vente</h3>
+          <div class="header-flex">
+            <h3>🛒 Détails de la Vente</h3>
+            <button *ngIf="cart.length > 0" class="btn-clear-cart" (click)="clearCart()" title="Vider tous les articles du panier">
+              🗑️ Vider le panier
+            </button>
+          </div>
           
           <table class="cart-table">
             <thead>
@@ -185,32 +187,33 @@
                     <button class="btn-qty" (click)="increaseQty(item)">+</button>
                   </div>
                 </td>
-                <td><strong class="item-total">{{ item.quantity * item.unitPrice }} FCFA</strong></td>
-                <td><button class="btn-remove" (click)="removeFromCart(i)">✕</button></td>
+                <td><strong class="item-total">{{ item.quantity * item.unitPrice | fcfa }}</strong></td>
+                <td><button class="btn-remove" (click)="removeFromCart(i)" title="Retirer l'article">✕</button></td>
               </tr>
               <tr *ngIf="cart.length === 0">
-                <td colspan="5" class="empty-state">Panier vide. Sélectionnez des produits.</td>
+                <td colspan="5" class="empty-state">Votre panier est vide. Veuillez sélectionner des articles.</td>
               </tr>
             </tbody>
           </table>
 
           <div *ngIf="cart.length > 0" class="cart-summary">
             <div class="total-row">
-              <span>TOTAL À PAYER :</span>
-              <span class="grand-total">{{ getTotal() }} FCFA</span>
+              <span>MONTANT TOTAL :</span>
+              <span class="grand-total">{{ getTotal() | fcfa }}</span>
             </div>
 
             <div class="payment-section">
               <label class="input-label">Mode de Règlement :</label>
               <select [(ngModel)]="paymentMethod">
-                <option value="CASH">💵 Espèces (Cash)</option>
-                <option value="ORANGE_MONEY">📱 Orange Money</option>
+                <option value="CASH">💵 Espèces</option>
+                <option value="ORANGE_MONEY">🍊 Orange Money</option>
                 <option value="MOOV_MONEY">📱 Moov Money</option>
-                <option value="CARD">💳 Carte BANCAIRE</option>
+                <option value="WAVE">🌊 Wave</option>
+                <option value="CARD">💳 Carte Bancaire</option>
               </select>
 
               <button class="btn-checkout" (click)="validateSale()">
-                ENREGISTRER LA VENTE ({{ getTotal() }} FCFA)
+                ENCAISSER / VALIDER LA VENTE ({{ getTotal() | fcfa }})
               </button>
             </div>
           </div>

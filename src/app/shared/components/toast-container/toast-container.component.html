@@ -1,0 +1,53 @@
+<div class="toast-viewport" aria-live="polite" aria-atomic="true">
+  <div
+    *ngFor="let toast of toastService.toasts()"
+    class="toast-card"
+    [class.toast-success]="toast.type === 'success'"
+    [class.toast-error]="toast.type === 'error'"
+    [class.toast-warning]="toast.type === 'warning'"
+    [class.toast-info]="toast.type === 'info'"
+    [class.dismissing]="toast.dismissing"
+    role="alert"
+  >
+    <div class="toast-glow"></div>
+
+    <div class="toast-content-wrapper">
+      <div class="toast-icon-wrapper">
+        <span class="toast-icon">{{ toast.icon }}</span>
+      </div>
+
+      <div class="toast-body">
+        <div *ngIf="toast.title" class="toast-title">{{ toast.title }}</div>
+        <div class="toast-message">{{ toast.message }}</div>
+
+        <div *ngIf="toast.action" class="toast-action-container">
+          <button
+            type="button"
+            class="toast-action-btn"
+            [class.action-primary]="toast.action.primary !== false"
+            (click)="onActionClick(toast)"
+          >
+            {{ toast.action.label }}
+          </button>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="toast-close-btn"
+        (click)="onDismiss(toast)"
+        aria-label="Fermer la notification"
+      >
+        ✕
+      </button>
+    </div>
+
+    <!-- CSS-only Animated Progress Bar (Zero JS timer, GPU Accelerated) -->
+    <div *ngIf="toast.duration > 0" class="toast-progress-track">
+      <div
+        class="toast-progress-bar"
+        [style.animation-duration.ms]="toast.duration"
+      ></div>
+    </div>
+  </div>
+</div>

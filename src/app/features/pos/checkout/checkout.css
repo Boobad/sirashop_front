@@ -524,6 +524,24 @@ select {
   box-shadow: 0 8px 25px rgba(37, 99, 235, 0.55);
 }
 
+.btn-clear-cart {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-clear-cart:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  transform: translateY(-1px);
+}
+
 .empty-state {
   text-align: center;
   padding: 2rem;

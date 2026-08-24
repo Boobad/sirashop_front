@@ -1,0 +1,56 @@
+<div
+  *ngIf="confirmService.state().isOpen"
+  class="dialog-backdrop"
+  (click)="onCancel()"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="dialog-title"
+>
+  <div
+    class="dialog-box"
+    [class.dialog-danger]="confirmService.state().type === 'danger'"
+    [class.dialog-warning]="confirmService.state().type === 'warning'"
+    [class.dialog-info]="confirmService.state().type === 'info'"
+    [class.dialog-primary]="confirmService.state().type === 'primary'"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="dialog-glow-top"></div>
+
+    <div class="dialog-header">
+      <div class="dialog-icon-wrapper">
+        <span class="dialog-icon">{{ confirmService.state().icon }}</span>
+      </div>
+      <div class="dialog-header-text">
+        <h3 id="dialog-title" class="dialog-title">{{ confirmService.state().title }}</h3>
+        <p class="dialog-subtitle">Action sensible requérant confirmation</p>
+      </div>
+      <button class="dialog-close-btn" (click)="onCancel()" aria-label="Fermer">✕</button>
+    </div>
+
+    <div class="dialog-body">
+      <p class="dialog-message">{{ confirmService.state().message }}</p>
+    </div>
+
+    <div class="dialog-footer">
+      <button
+        type="button"
+        class="dialog-btn btn-cancel"
+        (click)="onCancel()"
+      >
+        {{ confirmService.state().cancelText || 'Annuler' }}
+      </button>
+
+      <button
+        type="button"
+        class="dialog-btn btn-confirm"
+        [class.btn-confirm-danger]="confirmService.state().type === 'danger'"
+        [class.btn-confirm-warning]="confirmService.state().type === 'warning'"
+        [class.btn-confirm-info]="confirmService.state().type === 'info'"
+        [class.btn-confirm-primary]="confirmService.state().type === 'primary'"
+        (click)="onConfirm()"
+      >
+        {{ confirmService.state().confirmText || 'Confirmer' }}
+      </button>
+    </div>
+  </div>
+</div>

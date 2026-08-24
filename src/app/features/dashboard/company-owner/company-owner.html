@@ -4,16 +4,16 @@
       <img src="assets/logo.png" alt="SiraShop Logo" class="brand-logo-img">
       <div class="logo-text">
         <span class="brand-name">SiraShop</span>
-        <span class="badge-pro">Pro Owner</span>
+        <span class="badge-pro">Espace Gérant</span>
       </div>
     </div>
     <nav>
       <ul>
         <li class="active"><a routerLink="/company-owner">🏢 Espace Propriétaire</a></li>
-        <li><a routerLink="/advanced-dashboard">📊 Dashboard Avancé</a></li>
-        <li><a routerLink="/stock">📦 Stocks & Catalogues</a></li>
-        <li><a routerLink="/pos">🛒 Caisse POS (Vendeur)</a></li>
-        <li><a routerLink="/repair">🛠️ Atelier SAV</a></li>
+        <li><a routerLink="/advanced-dashboard">📊 Tableau de Bord</a></li>
+        <li><a routerLink="/stock">📦 Produits & Stock</a></li>
+        <li><a routerLink="/pos">🛒 Caisse & Ventes</a></li>
+        <li><a routerLink="/repair">🛠️ Réparations & SAV</a></li>
       </ul>
     </nav>
   </aside>
@@ -69,19 +69,19 @@
       <div *ngIf="stats" class="kpi-grid">
         <div class="kpi-card total">
           <div class="kpi-title">💰 Chiffre d'Affaires Total</div>
-          <div class="kpi-value">{{ stats.totalRevenue || 0 }} FCFA</div>
+          <div class="kpi-value">{{ stats.totalRevenue | fcfa }}</div>
           <div class="kpi-sub">Total Ventes + Réparations</div>
         </div>
 
         <div class="kpi-card sales">
           <div class="kpi-title">🛒 Ventes d'Articles</div>
-          <div class="kpi-value">{{ stats.salesRevenue || 0 }} FCFA</div>
+          <div class="kpi-value">{{ stats.salesRevenue | fcfa }}</div>
           <div class="kpi-sub">{{ stats.totalSalesCount || 0 }} transactions en caisse</div>
         </div>
 
         <div class="kpi-card repairs">
           <div class="kpi-title">🛠️ Réparations SAV</div>
-          <div class="kpi-value">{{ stats.repairRevenue || 0 }} FCFA</div>
+          <div class="kpi-value">{{ stats.repairRevenue | fcfa }}</div>
           <div class="kpi-sub">{{ stats.totalRepairsCount || 0 }} appareils réparés</div>
         </div>
       </div>
@@ -103,11 +103,11 @@
           <tbody>
             <tr *ngFor="let s of stats.shopStats">
               <td><strong>{{ s.shopName }}</strong></td>
-              <td><span class="text-green">{{ s.salesRevenue || 0 }} FCFA</span></td>
+              <td><span class="text-green">{{ s.salesRevenue | fcfa }}</span></td>
               <td>{{ s.salesCount || 0 }}</td>
-              <td><span class="text-purple">{{ s.repairRevenue || 0 }} FCFA</span></td>
+              <td><span class="text-purple">{{ s.repairRevenue | fcfa }}</span></td>
               <td>{{ s.repairsCount || 0 }}</td>
-              <td><strong class="text-gold">{{ s.totalRevenue || 0 }} FCFA</strong></td>
+              <td><strong class="text-gold">{{ s.totalRevenue | fcfa }}</strong></td>
             </tr>
           </tbody>
         </table>
@@ -135,10 +135,12 @@
               <td><strong>{{ s.shopName || getShopName(s.shopId) }}</strong></td>
               <td><span class="seller-badge">👤 {{ s.sellerUsername }}</span></td>
               <td>
-                <span class="payment-badge">{{ s.paymentMethod || 'CASH' }}</span>
+                <span class="payment-badge">
+                  {{ s.paymentMethod === 'CASH' ? '💵 Espèces' : (s.paymentMethod === 'ORANGE_MONEY' ? '🍊 Orange Money' : (s.paymentMethod === 'MOOV_MONEY' ? '📱 Moov Money' : (s.paymentMethod === 'WAVE' ? '🌊 Wave' : (s.paymentMethod === 'CARD' ? '💳 Carte Bancaire' : s.paymentMethod)))) }}
+                </span>
               </td>
-              <td><strong class="text-green">{{ s.totalAmount }} FCFA</strong></td>
-              <td>{{ s.createdAt | date:'medium' }}</td>
+              <td><strong class="text-green">{{ s.totalAmount | fcfa }}</strong></td>
+              <td>{{ s.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
             </tr>
             <tr *ngIf="sales.length === 0">
               <td colspan="6" class="empty-state">Aucune vente enregistrée pour le moment.</td>

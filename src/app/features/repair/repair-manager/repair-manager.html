@@ -4,7 +4,7 @@
       <img src="assets/logo.png" alt="SiraShop Logo" class="brand-logo-img">
       <div class="logo-text">
         <span class="brand-name">SiraShop</span>
-        <span class="badge-pro">Atelier SAV</span>
+        <span class="badge-pro">Réparations & SAV</span>
       </div>
     </div>
     <nav>
@@ -13,15 +13,15 @@
           <a routerLink="/company-owner">🏢 Espace Propriétaire</a>
         </li>
         <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'SUPER_ADMIN'">
-          <a routerLink="/advanced-dashboard">📊 Dashboard Avancé</a>
+          <a routerLink="/advanced-dashboard">📊 Tableau de Bord</a>
         </li>
         <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'MANAGER' || currentUser?.role === 'SUPER_ADMIN'">
-          <a routerLink="/stock">📦 Stocks & Catalogues</a>
+          <a routerLink="/stock">📦 Produits & Stock</a>
         </li>
         <li *ngIf="currentUser?.role !== 'TECHNICIAN'">
-          <a routerLink="/pos">🛒 Caisse POS (Vendeur)</a>
+          <a routerLink="/pos">🛒 Caisse & Ventes</a>
         </li>
-        <li class="active"><a routerLink="/repair">🛠️ Atelier SAV (Réparations)</a></li>
+        <li class="active"><a routerLink="/repair">🛠️ Réparations & SAV</a></li>
       </ul>
     </nav>
   </aside>
@@ -54,16 +54,16 @@
 
           <div class="modal-body" *ngIf="activePaymentTicket">
             <div class="payment-info-box">
-              <div>Prix Estimé : <strong>{{ activePaymentTicket.estimatedPrice || 0 }} FCFA</strong></div>
-              <div>Acompte actuel : <strong>{{ activePaymentTicket.depositAmount || 0 }} FCFA</strong></div>
-              <div class="text-amber">Reste à régler : <strong>{{ (activePaymentTicket.estimatedPrice || 0) - (activePaymentTicket.depositAmount || 0) }} FCFA</strong></div>
+              <div>Coût Estimé : <strong>{{ activePaymentTicket.estimatedPrice | fcfa }}</strong></div>
+              <div>Acompte versé : <strong>{{ activePaymentTicket.depositAmount | fcfa }}</strong></div>
+              <div class="text-amber">Reste à payer : <strong>{{ ((activePaymentTicket.estimatedPrice || 0) - (activePaymentTicket.depositAmount || 0)) | fcfa }}</strong></div>
             </div>
 
             <div class="form-group">
               <label>Type d'opération :</label>
               <select [(ngModel)]="paymentMode" class="custom-input">
-                <option value="ADDITIONAL">➕ Versement supplémentaire (ex: 5 000 F)</option>
-                <option value="SET_DEPOSIT">✏️ Définir nouvel acompte total (ex: 20 000 F)</option>
+                <option value="ADDITIONAL">➕ Versement supplémentaire (ex: 5 000 FCFA)</option>
+                <option value="SET_DEPOSIT">✏️ Définir nouvel acompte total (ex: 20 000 FCFA)</option>
               </select>
             </div>
 
@@ -83,22 +83,22 @@
       <div class="grid-2">
         <!-- FORMULAIRE DE RECEPTION D'UN APPAREIL EN PANNE -->
         <div class="card">
-          <h3>📝 Fiche de Dépôt Réparation</h3>
+          <h3>📝 Nouveau Ticket de Réparation</h3>
           <p>Enregistrez un appareil déposé par un client en panne</p>
 
           <div class="form-vertical">
             <input type="text" [(ngModel)]="customerName" placeholder="Nom complet du client (ex: Mamadou Coulibaly)...">
             <input type="text" [(ngModel)]="customerPhone" placeholder="Téléphone du client (ex: +223 70 00 00 00)...">
-            <input type="text" [(ngModel)]="deviceModel" placeholder="Modèle d'appareil (ex: iPhone 11 64GB, Samsung S21)...">
+            <input type="text" [(ngModel)]="deviceModel" placeholder="Appareil / Marque / Modèle (ex: iPhone 11 64GB, Samsung S21)...">
             <textarea [(ngModel)]="issueDescription" placeholder="Description de la panne (ex: Écran cassé, problème de batterie)..." rows="3"></textarea>
 
             <div class="grid-inputs">
               <div>
-                <label class="input-label">Prix Total Estimé (FCFA) :</label>
+                <label class="input-label">Coût Total Estimé (FCFA) :</label>
                 <input type="number" [(ngModel)]="estimatedPrice" placeholder="ex: 35000">
               </div>
               <div>
-                <label class="input-label">Acompte Payé (FCFA) :</label>
+                <label class="input-label">Acompte Versé (FCFA) :</label>
                 <input type="number" [(ngModel)]="depositAmount" placeholder="ex: 15000">
               </div>
             </div>
@@ -109,7 +109,7 @@
               <option *ngFor="let t of technicians" [value]="t.id">{{ t.username }}</option>
             </select>
 
-            <button (click)="createTicket()">Créer le Ticket de Dépôt</button>
+            <button (click)="createTicket()">Créer le Ticket de Réparation</button>
           </div>
         </div>
 
@@ -126,16 +126,16 @@
               </div>
 
               <div class="ticket-issue">
-                <strong>Panne :</strong> {{ t.issueDescription || 'Non spécifiée' }}
+                <strong>Description de la panne :</strong> {{ t.issueDescription || 'Non spécifiée' }}
               </div>
 
               <div class="ticket-financials">
-                <span>Prix: <strong>{{ t.estimatedPrice || 0 }} FCFA</strong></span>
-                <span class="margin-left">Acompte: <strong class="deposit">{{ t.depositAmount || 0 }} FCFA</strong></span>
+                <span>Coût estimé : <strong>{{ t.estimatedPrice | fcfa }}</strong></span>
+                <span class="margin-left">Acompte : <strong class="deposit">{{ t.depositAmount | fcfa }}</strong></span>
                 <span class="margin-left">
-                  Reste: 
+                  Reste à payer : 
                   <strong class="remaining" [class.paid]="(t.estimatedPrice || 0) - (t.depositAmount || 0) <= 0">
-                    {{ (t.estimatedPrice || 0) - (t.depositAmount || 0) > 0 ? ((t.estimatedPrice || 0) - (t.depositAmount || 0) + ' FCFA') : '0 FCFA (Soldé ✅)' }}
+                    {{ (t.estimatedPrice || 0) - (t.depositAmount || 0) > 0 ? (((t.estimatedPrice || 0) - (t.depositAmount || 0)) | fcfa) : '0 FCFA (Soldé ✅)' }}
                   </strong>
                 </span>
               </div>
@@ -156,7 +156,7 @@
                     ➕ Versement
                   </button>
                   <span *ngIf="(t.estimatedPrice || 0) - (t.depositAmount || 0) <= 0" class="badge-fully-paid">
-                    ✅ Payé
+                    ✅ Entièrement Payé
                   </span>
                 </div>
               </div>

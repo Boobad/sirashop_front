@@ -1,0 +1,105 @@
+<div
+  *ngIf="receiptService.isOpen()"
+  class="receipt-backdrop"
+  (click)="close()"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="receipt-modal-box" (click)="$event.stopPropagation()">
+    <!-- Top Modal Header (Visible in screen, hidden during print) -->
+    <div class="modal-top-bar no-print">
+      <div class="top-bar-title">
+        <span class="badge-success-glow">🎉 Vente Réussie</span>
+        <h3>Ticket de Caisse & Reçu de Vente</h3>
+      </div>
+      <button class="btn-close-modal" (click)="close()" title="Fermer">✕</button>
+    </div>
+
+    <!-- Printable Thermal Receipt Area -->
+    <div class="receipt-paper" id="printable-receipt">
+      <div class="receipt-header">
+        <div class="receipt-brand">✨ SIRASHOP MALI</div>
+        <div class="receipt-company">{{ receiptService.receiptData()?.companyName || 'SIRASHOP S.A.' }}</div>
+        <div class="receipt-shop">{{ receiptService.receiptData()?.shopName || 'Point de Vente' }}</div>
+        <div *ngIf="receiptService.receiptData()?.shopAddress" class="receipt-address">
+          📍 {{ receiptService.receiptData()?.shopAddress }}
+        </div>
+      </div>
+
+      <div class="receipt-divider">--------------------------------</div>
+
+      <div class="receipt-meta">
+        <div class="meta-row">
+          <span>Ticket :</span>
+          <strong>#{{ receiptService.receiptData()?.saleId || receiptService.receiptData()?.ticketNumber || 'N/A' }}</strong>
+        </div>
+        <div class="meta-row">
+          <span>Date :</span>
+          <span>{{ receiptService.receiptData()?.date | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+        </div>
+        <div *ngIf="receiptService.receiptData()?.sellerName" class="meta-row">
+          <span>Vendeur :</span>
+          <span>{{ receiptService.receiptData()?.sellerName }}</span>
+        </div>
+        <div *ngIf="receiptService.receiptData()?.customerName" class="meta-row">
+          <span>Client :</span>
+          <span>{{ receiptService.receiptData()?.customerName }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider">================================</div>
+
+      <table class="receipt-table">
+        <thead>
+          <tr>
+            <th class="col-item">Article</th>
+            <th class="col-qty">Qté</th>
+            <th class="col-price">P.U.</th>
+            <th class="col-total">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of receiptService.receiptData()?.items">
+            <td class="col-item">{{ item.productName }}</td>
+            <td class="col-qty">{{ item.quantity }}</td>
+            <td class="col-price">{{ item.unitPrice | fcfa }}</td>
+            <td class="col-total">{{ item.totalPrice | fcfa }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="receipt-divider">================================</div>
+
+      <div class="receipt-totals">
+        <div class="total-row grand-total-row">
+          <span>MONTANT TOTAL :</span>
+          <span>{{ receiptService.receiptData()?.totalAmount | fcfa }}</span>
+        </div>
+        <div class="total-row sub-row">
+          <span>Mode de Règlement :</span>
+          <span>{{ receiptService.receiptData()?.paymentMethod || 'Espèces' }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider">--------------------------------</div>
+
+      <div class="receipt-footer">
+        <p>🙏 Merci pour votre visite et votre confiance !</p>
+        <p class="receipt-slogan">SiraShop - Système de Gestion Commerciale (Mali)</p>
+        <div class="barcode-placeholder">
+          ||||| | |||| ||| |||||| |||| |||||
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer Actions (Hidden on Print) -->
+    <div class="modal-bottom-actions no-print">
+      <button type="button" class="btn-action-close" (click)="close()">
+        Fermer
+      </button>
+      <button type="button" class="btn-action-print" (click)="print()">
+        🖨️ Imprimer le Reçu / Ticket
+      </button>
+    </div>
+  </div>
+</div>

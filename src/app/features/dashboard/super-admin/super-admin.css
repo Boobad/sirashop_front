@@ -222,3 +222,192 @@
   color: #60a5fa;
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
+
+/* ==========================================================================
+   MODALE ENCAISSEMENT ABONNEMENT (COSMIC GLASSMORPHISM)
+   ========================================================================== */
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(2, 6, 23, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: modal-fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-box {
+  position: relative;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 20px;
+  padding: 2.2rem;
+  width: 480px;
+  max-width: 90vw;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 35px rgba(16, 185, 129, 0.2);
+  display: flex;
+  flex-direction: column;
+  animation: modal-pop-in 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.modal-header p {
+  color: var(--accent-emerald);
+  margin: 0.3rem 0 1.2rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.modal-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 1.2rem;
+  color: #fecaca;
+  animation: error-appear 0.2s ease forwards;
+}
+
+.modal-error-banner .error-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.modal-error-banner .error-text strong {
+  display: block;
+  font-size: 0.88rem;
+  color: #f87171;
+  margin-bottom: 2px;
+}
+
+.modal-error-banner .error-text p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: #fca5a5;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group label {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.custom-input {
+  background: rgba(2, 6, 23, 0.65);
+  border: 1px solid var(--border-medium);
+  color: var(--text-main);
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.custom-input:focus {
+  border-color: var(--accent-emerald);
+  box-shadow: 0 0 14px var(--accent-emerald-glow);
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.9rem;
+  margin-top: 1.8rem;
+}
+
+.btn-secondary {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  border: 1px solid var(--border-medium);
+  padding: 0.75rem 1.3rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover:not([disabled]) {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.btn-emerald {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.4rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+  transition: all 0.2s ease;
+}
+
+.btn-emerald:hover:not([disabled]) {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+  box-shadow: 0 8px 22px rgba(16, 185, 129, 0.45);
+}
+
+.btn-emerald:disabled, .btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes error-appear {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

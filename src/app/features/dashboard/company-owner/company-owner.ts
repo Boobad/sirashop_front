@@ -2,12 +2,15 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { FcfaPipe } from '../../../shared/pipes/fcfa.pipe';
 import { CompanyService } from '../../../core/services/company.service';
 import { ShopService } from '../../../core/services/shop.service';
 import { UserService } from '../../../core/services/user.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { SaleService } from '../../../core/services/sale.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { Company } from '../../../core/services/company.model';
 import { Shop } from '../../../core/services/shop.model';
 import { User, UserRole } from '../../../core/services/user.model';
@@ -17,7 +20,7 @@ import { Sale } from '../../../core/services/sale.model';
 @Component({
   selector: 'app-company-owner',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, FcfaPipe],
   templateUrl: './company-owner.html',
   styleUrls: ['./company-owner.css']
 })
@@ -56,23 +59,30 @@ export class CompanyOwnerComponent implements OnInit {
     private dashboardService: DashboardService,
     private saleService: SaleService,
     private authService: AuthService,
+    private toastService: ToastService,
+    private confirmDialogService: ConfirmDialogService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.currentUser = this.authService.getUser();
 
-    this.companyService.getCompanies().subscribe(data => {
-      this.companies = data;
+    this.companyService.getCompanies().subscribe({
+      next: (data) => {
+        this.companies = data;
 
-      if (this.currentUser && this.currentUser.companyId) {
-        this.selectedCompanyId = this.currentUser.companyId;
-      } else if (this.companies.length > 0) {
-        this.selectedCompanyId = this.companies[0].id!;
-      }
+        if (this.currentUser && this.currentUser.companyId) {
+          this.selectedCompanyId = this.currentUser.companyId;
+        } else if (this.companies.length > 0) {
+          this.selectedCompanyId = this.companies[0].id!;
+        }
 
-      if (this.selectedCompanyId) {
-        this.onCompanyChange();
+        if (this.selectedCompanyId) {
+          this.onCompanyChange();
+        }
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur chargement entreprises' });
       }
     });
   }
@@ -80,20 +90,40 @@ export class CompanyOwnerComponent implements OnInit {
   onCompanyChange(): void {
     if (!this.selectedCompanyId) return;
 
-    this.shopService.getShopsByCompany(this.selectedCompanyId).subscribe(data => {
-      this.shops = data;
+    this.shopService.getShopsByCompany(this.selectedCompanyId).subscribe({
+      next: (data) => {
+        this.shops = data;
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur chargement boutiques' });
+      }
     });
 
-    this.userService.getUsersByCompany(this.selectedCompanyId).subscribe(data => {
-      this.users = data;
+    this.userService.getUsersByCompany(this.selectedCompanyId).subscribe({
+      next: (data) => {
+        this.users = data;
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur chargement employés' });
+      }
     });
 
-    this.saleService.getSalesByCompany(this.selectedCompanyId).subscribe(data => {
-      this.sales = data;
+    this.saleService.getSalesByCompany(this.selectedCompanyId).subscribe({
+      next: (data) => {
+        this.sales = data;
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur ventes' });
+      }
     });
 
-    this.dashboardService.getCompanyStats(this.selectedCompanyId).subscribe(data => {
-      this.stats = data;
+    this.dashboardService.getCompanyStats(this.selectedCompanyId).subscribe({
+      next: (data) => {
+        this.stats = data;
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur statistiques' });
+      }
     });
   }
 
@@ -117,7 +147,7 @@ export class CompanyOwnerComponent implements OnInit {
 
   submitChangePassword(): void {
     if (!this.currentUser || !this.currentUser.id || !this.oldPasswordInput.trim() || !this.newPasswordInput.trim()) {
-      this.passwordError = 'Veuillez saisir votre ancien et nouveau mot de passe';
+      this.toastService.warning('Veuillez saisir votre ancien et nouveau mot de passe');
       return;
     }
 
@@ -127,54 +157,90 @@ export class CompanyOwnerComponent implements OnInit {
       this.newPasswordInput
     ).subscribe({
       next: () => {
-        this.passwordSuccess = '✅ Votre mot de passe a été modifié avec succès !';
-        this.passwordError = '';
-        setTimeout(() => {
-          this.showPasswordModal = false;
-          this.passwordSuccess = '';
-        }, 2000);
+        this.toastService.success('Votre mot de passe a été modifié avec succès !', {
+          title: '🔐 Mot de passe mis à jour'
+        });
+        this.showPasswordModal = false;
       },
       error: (err) => {
-        this.passwordError = err.error?.message || 'L\'ancien mot de passe est incorrect';
-        this.passwordSuccess = '';
+        this.toastService.error(err, { title: 'Erreur mot de passe' });
       }
     });
   }
 
   createShop(): void {
-    if (!this.newShopName.trim() || !this.selectedCompanyId) return;
+    if (!this.newShopName.trim()) {
+      this.toastService.warning('Veuillez renseigner le nom de la boutique.');
+      return;
+    }
+    if (!this.selectedCompanyId) {
+      this.toastService.error('Aucune entreprise sélectionnée.');
+      return;
+    }
+
+    const name = this.newShopName.trim();
 
     this.shopService.createShop({
-      name: this.newShopName,
-      address: this.newShopAddress,
+      name: name,
+      address: this.newShopAddress.trim(),
       companyId: this.selectedCompanyId
-    }).subscribe(data => {
-      this.shops.push(data);
-      this.newShopName = '';
-      this.newShopAddress = '';
-      this.onCompanyChange();
+    }).subscribe({
+      next: (data) => {
+        this.shops.push(data);
+        this.toastService.success(`Boutique '${data.name}' créée avec succès !`);
+        this.newShopName = '';
+        this.newShopAddress = '';
+        this.onCompanyChange();
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur création boutique' });
+      }
     });
   }
 
   createUser(): void {
-    if (!this.newUsername.trim() || !this.newPassword.trim() || !this.selectedCompanyId) return;
+    if (!this.newUsername.trim()) {
+      this.toastService.warning('Veuillez renseigner un identifiant pour l\'employé.');
+      return;
+    }
+    if (!this.newPassword.trim()) {
+      this.toastService.warning('Veuillez définir un mot de passe temporaire.');
+      return;
+    }
+    if (!this.selectedCompanyId) {
+      this.toastService.error('Aucune entreprise sélectionnée.');
+      return;
+    }
+
+    const username = this.newUsername.trim();
+    const role = this.newRole;
 
     this.userService.createUser({
-      username: this.newUsername,
-      password: this.newPassword,
-      role: this.newRole,
+      username: username,
+      password: this.newPassword.trim(),
+      role: role,
       companyId: this.selectedCompanyId,
       shopId: this.selectedShopId || undefined
-    }).subscribe(data => {
-      this.users.push(data);
-      this.newUsername = '';
-      this.newPassword = '';
-      this.selectedShopId = null;
+    }).subscribe({
+      next: (data) => {
+        this.users.push(data);
+        this.toastService.success(
+          `Compte '${data.username}' (${data.role}) créé avec succès ! Un email avec ses identifiants a été préparé.`
+        );
+        this.newUsername = '';
+        this.newPassword = '';
+        this.selectedShopId = null;
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur création employé' });
+      }
     });
   }
 
   logout(): void {
     this.authService.logout();
+    this.toastService.info('Vous êtes déconnecté.', { duration: 2500 });
     this.router.navigate(['/login']);
   }
 }
+

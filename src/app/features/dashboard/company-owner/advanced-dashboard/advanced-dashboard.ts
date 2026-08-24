@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
+import { FcfaPipe } from '../../../../shared/pipes/fcfa.pipe';
 import { CompanyService } from '../../../../core/services/company.service';
 import { DashboardService } from '../../../../core/services/dashboard.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { UserService } from '../../../../core/services/user.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { Company } from '../../../../core/services/company.model';
 import { AdvancedStats } from '../../../../core/services/advanced-stats.model';
 
@@ -15,7 +17,7 @@ Chart.register(...registerables);
 @Component({
   selector: 'app-advanced-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, FcfaPipe],
   templateUrl: './advanced-dashboard.html',
   styleUrls: ['./advanced-dashboard.css']
 })
@@ -51,6 +53,7 @@ export class AdvancedDashboardComponent implements OnInit, AfterViewInit, OnDest
     private dashboardService: DashboardService,
     private authService: AuthService,
     private userService: UserService,
+    private toastService: ToastService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -336,9 +339,10 @@ export class AdvancedDashboardComponent implements OnInit, AfterViewInit, OnDest
     // 4. Payment Methods Chart (Doughnut Chart)
     if (this.paymentMethodsCanvas && this.stats.paymentMethods) {
       const paymentLabels: { [key: string]: string } = {
-        'CASH': '💵 Espèces (Cash)',
+        'CASH': '💵 Espèces',
         'ORANGE_MONEY': '🍊 Orange Money',
         'MOOV_MONEY': '📱 Moov Money',
+        'WAVE': '🌊 Wave',
         'CARD': '💳 Carte Bancaire'
       };
 
@@ -349,6 +353,7 @@ export class AdvancedDashboardComponent implements OnInit, AfterViewInit, OnDest
         'CASH': '#10b981',
         'ORANGE_MONEY': '#f97316',
         'MOOV_MONEY': '#06b6d4',
+        'WAVE': '#38bdf8',
         'CARD': '#3b82f6'
       };
 
@@ -404,7 +409,7 @@ export class AdvancedDashboardComponent implements OnInit, AfterViewInit, OnDest
 
   submitChangePassword(): void {
     if (!this.currentUser || !this.currentUser.id || !this.oldPasswordInput.trim() || !this.newPasswordInput.trim()) {
-      this.passwordError = 'Veuillez saisir votre ancien et nouveau mot de passe';
+      this.toastService.warning('Veuillez saisir votre ancien et nouveau mot de passe');
       return;
     }
 
@@ -414,22 +419,20 @@ export class AdvancedDashboardComponent implements OnInit, AfterViewInit, OnDest
       this.newPasswordInput
     ).subscribe({
       next: () => {
-        this.passwordSuccess = '✅ Votre mot de passe a été modifié avec succès !';
-        this.passwordError = '';
-        setTimeout(() => {
-          this.showPasswordModal = false;
-          this.passwordSuccess = '';
-        }, 2000);
+        this.toastService.success('Votre mot de passe a été modifié avec succès !', {
+          title: '🔐 Mot de passe mis à jour'
+        });
+        this.showPasswordModal = false;
       },
       error: (err) => {
-        this.passwordError = err.error?.message || 'L\'ancien mot de passe est incorrect';
-        this.passwordSuccess = '';
+        this.toastService.error(err, { title: 'Erreur mot de passe' });
       }
     });
   }
 
   logout(): void {
     this.authService.logout();
+    this.toastService.info('Vous êtes déconnecté.', { duration: 2500 });
     this.router.navigate(['/login']);
   }
 }

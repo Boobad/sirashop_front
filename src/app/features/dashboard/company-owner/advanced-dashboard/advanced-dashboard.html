@@ -5,16 +5,16 @@
       <img src="assets/logo.png" alt="SiraShop Logo" class="brand-logo-img">
       <div class="logo-text">
         <span class="brand-name">SiraShop</span>
-        <span class="badge-pro">Pro Owner</span>
+        <span class="badge-pro">Espace Gérant</span>
       </div>
     </div>
     <nav>
       <ul>
         <li><a routerLink="/company-owner">🏢 Espace Propriétaire</a></li>
-        <li class="active"><a routerLink="/advanced-dashboard">📊 Dashboard Avancé</a></li>
-        <li><a routerLink="/stock">📦 Stocks & Catalogues</a></li>
-        <li><a routerLink="/pos">🛒 Caisse POS (Vendeur)</a></li>
-        <li><a routerLink="/repair">🛠️ Atelier SAV</a></li>
+        <li class="active"><a routerLink="/advanced-dashboard">📊 Tableau de Bord</a></li>
+        <li><a routerLink="/stock">📦 Produits & Stock</a></li>
+        <li><a routerLink="/pos">🛒 Caisse & Ventes</a></li>
+        <li><a routerLink="/repair">🛠️ Réparations & SAV</a></li>
       </ul>
     </nav>
   </aside>
@@ -69,8 +69,8 @@
       <!-- PAGE TITLE -->
       <div class="page-header">
         <div class="page-title-group">
-          <h2>📊 Tableau de Bord Analytics & Analytics Avancés</h2>
-          <p>Analyse approfondie du Chiffre d'Affaires, top ventes, classements vendeurs et modes de paiement.</p>
+          <h2>📊 Tableau de Bord & Statistiques Avancées</h2>
+          <p>Analyse approfondie du Chiffre d'Affaires, des meilleures ventes, des classements vendeurs et des canaux de paiement.</p>
         </div>
         <button class="btn-refresh" (click)="loadAdvancedStats()">🔄 Actualiser les données</button>
       </div>
@@ -98,30 +98,30 @@
                 <span *ngIf="stats.revenueGrowthPercentage < 0">▼ {{ stats.revenueGrowthPercentage | number:'1.1-2' }}%</span>
               </span>
             </div>
-            <div class="kpi-value">{{ stats.currentMonthRevenue || 0 | number }} FCFA</div>
+            <div class="kpi-value">{{ stats.currentMonthRevenue | fcfa }}</div>
             <div class="kpi-sub">
-              Mois dernier: <strong>{{ stats.previousMonthRevenue || 0 | number }} FCFA</strong>
+              Mois précédent : <strong>{{ stats.previousMonthRevenue | fcfa }}</strong>
             </div>
           </div>
 
           <!-- Carte 2: CA Total Global -->
           <div class="kpi-card total">
             <div class="kpi-title">💰 Chiffre d'Affaires Global</div>
-            <div class="kpi-value">{{ stats.totalRevenue || 0 | number }} FCFA</div>
+            <div class="kpi-value">{{ stats.totalRevenue | fcfa }}</div>
             <div class="kpi-sub">Ventes ({{ stats.totalSalesCount || 0 }}) + Réparations ({{ stats.totalRepairsCount || 0 }})</div>
           </div>
 
           <!-- Carte 3: Ventes d'Articles -->
           <div class="kpi-card sales">
             <div class="kpi-title">🛒 CA Ventes Articles</div>
-            <div class="kpi-value text-green">{{ stats.salesRevenue || 0 | number }} FCFA</div>
+            <div class="kpi-value text-green">{{ stats.salesRevenue | fcfa }}</div>
             <div class="kpi-sub">{{ stats.totalSalesCount || 0 }} transactions au total</div>
           </div>
 
           <!-- Carte 4: Réparations SAV -->
           <div class="kpi-card repairs">
             <div class="kpi-title">🛠️ CA Réparations SAV</div>
-            <div class="kpi-value text-purple">{{ stats.repairRevenue || 0 | number }} FCFA</div>
+            <div class="kpi-value text-purple">{{ stats.repairRevenue | fcfa }}</div>
             <div class="kpi-sub">{{ stats.totalRepairsCount || 0 }} appareils réparés</div>
           </div>
         </div>
@@ -145,7 +145,7 @@
           <div class="card chart-card">
             <div class="card-header-flex">
               <div>
-                <h3>💳 Méthodes de Paiement</h3>
+                <h3>💳 Modes de Règlement</h3>
                 <p>Répartition par canal de paiement</p>
               </div>
             </div>
@@ -155,8 +155,10 @@
             <!-- Payment legend summary list -->
             <div class="payment-stats-list" *ngIf="stats.paymentMethods && stats.paymentMethods.length > 0">
               <div *ngFor="let pm of stats.paymentMethods" class="pm-item">
-                <span class="pm-name">{{ pm.paymentMethod }}</span>
-                <span class="pm-amount">{{ pm.totalAmount | number }} F</span>
+                <span class="pm-name">
+                  {{ pm.paymentMethod === 'CASH' ? '💵 Espèces' : (pm.paymentMethod === 'ORANGE_MONEY' ? '🍊 Orange Money' : (pm.paymentMethod === 'MOOV_MONEY' ? '📱 Moov Money' : (pm.paymentMethod === 'WAVE' ? '🌊 Wave' : (pm.paymentMethod === 'CARD' ? '💳 Carte Bancaire' : pm.paymentMethod)))) }}
+                </span>
+                <span class="pm-amount">{{ pm.totalAmount | fcfa }}</span>
                 <span class="pm-pct">({{ pm.percentage | number:'1.0-1' }}%)</span>
               </div>
             </div>
@@ -189,8 +191,8 @@
                 <tbody>
                   <tr *ngFor="let p of stats.topProducts">
                     <td><strong>{{ p.productName }}</strong></td>
-                    <td><span class="badge-qty">{{ p.totalQuantitySold }} u.</span></td>
-                    <td><strong class="text-green">{{ p.totalRevenue | number }} FCFA</strong></td>
+                    <td><span class="badge-qty">{{ p.totalQuantitySold }} unités</span></td>
+                    <td><strong class="text-green">{{ p.totalRevenue | fcfa }}</strong></td>
                   </tr>
                 </tbody>
               </table>
@@ -201,7 +203,7 @@
           <div class="card chart-card">
             <div class="card-header-flex">
               <div>
-                <h3>👔 Performance & Ranking Vendeurs</h3>
+                <h3>👔 Performance & Classement des Vendeurs</h3>
                 <p>Chiffre d'affaires réalisé par chaque membre de l'équipe</p>
               </div>
             </div>
@@ -225,7 +227,7 @@
                       <strong> {{ s.sellerName }}</strong>
                     </td>
                     <td>{{ s.totalSalesCount }} ventes</td>
-                    <td><strong class="text-gold">{{ s.totalRevenue | number }} FCFA</strong></td>
+                    <td><strong class="text-gold">{{ s.totalRevenue | fcfa }}</strong></td>
                   </tr>
                 </tbody>
               </table>
@@ -258,11 +260,11 @@
                   <span class="shop-icon">🏬</span>
                   <strong> {{ s.shopName }}</strong>
                 </td>
-                <td><span class="text-green">{{ s.salesRevenue || 0 | number }} FCFA</span></td>
+                <td><span class="text-green">{{ s.salesRevenue | fcfa }}</span></td>
                 <td>{{ s.salesCount || 0 }}</td>
-                <td><span class="text-purple">{{ s.repairRevenue || 0 | number }} FCFA</span></td>
+                <td><span class="text-purple">{{ s.repairRevenue | fcfa }}</span></td>
                 <td>{{ s.repairsCount || 0 }}</td>
-                <td><strong class="text-gold">{{ s.totalRevenue || 0 | number }} FCFA</strong></td>
+                <td><strong class="text-gold">{{ s.totalRevenue | fcfa }}</strong></td>
               </tr>
             </tbody>
           </table>

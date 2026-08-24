@@ -306,6 +306,22 @@ button:hover {
   color: var(--accent-rose);
 }
 
+.btn-delete-prod {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  font-size: 0.9rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-delete-prod:hover {
+  background: rgba(239, 68, 68, 0.3);
+  transform: scale(1.1);
+}
+
 .empty-state {
   text-align: center;
   padding: 2.5rem;

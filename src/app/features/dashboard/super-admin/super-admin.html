@@ -5,7 +5,7 @@
       <img src="assets/logo.png" alt="SiraShop Logo" class="brand-logo-img">
       <div class="logo-text">
         <span class="brand-name">SiraShop</span>
-        <span class="badge-saas">SaaS HQ</span>
+        <span class="badge-saas">Administration Générale</span>
       </div>
     </div>
 
@@ -14,7 +14,7 @@
         <li [class.active]="activeTab === 'companies'">
           <a (click)="setTab('companies')">
             <span class="icon">🏛️</span>
-            <span>Entreprises Clients</span>
+            <span>Entreprises Clientes</span>
           </a>
         </li>
         <li [class.active]="activeTab === 'payments'">
@@ -26,7 +26,7 @@
         <li [class.active]="activeTab === 'stats'">
           <a (click)="setTab('stats')">
             <span class="icon">📊</span>
-            <span>Statistiques Éditeur</span>
+            <span>Statistiques Globales</span>
           </a>
         </li>
         <li [class.active]="activeTab === 'admins'">
@@ -43,8 +43,8 @@
   <main class="main-content">
     <header class="top-header">
       <div class="header-left">
-        <h1>Panneau d'Administration SiraShop</h1>
-        <p class="subtitle">Gestion centrale des abonnements et entreprises clientes</p>
+        <h1>Panneau d'Administration Générale SiraShop</h1>
+        <p class="subtitle">Gestion centrale des abonnements et entreprises clientes au Mali</p>
       </div>
 
       <div class="user-info">
@@ -55,17 +55,21 @@
 
     <section class="content">
 
-      <!-- BANNIERE D'ALERTE DE SUCCES -->
-      <div *ngIf="successMessage" class="alert-banner">
-        <span>{{ successMessage }}</span>
-      </div>
-
       <!-- MODAL ENCAISSEMENT ABONNEMENT -->
-      <div *ngIf="selectedCompanyForPayment" class="modal-backdrop">
-        <div class="modal-box">
+      <div *ngIf="selectedCompanyForPayment" class="modal-backdrop" (click)="cancelPayment()">
+        <div class="modal-box" (click)="$event.stopPropagation()">
           <div class="modal-header">
             <h3>💳 Règlement d'Abonnement Mensuel</h3>
             <p>Client : <strong>{{ selectedCompanyForPayment.name }}</strong></p>
+          </div>
+
+          <!-- BANNIERE D'ERREUR DYNAMIQUE DANS LA MODALE -->
+          <div *ngIf="paymentErrorMsg" class="modal-error-banner">
+            <span class="error-icon">⚠️</span>
+            <div class="error-text">
+              <strong>Impossible d'enregistrer le paiement</strong>
+              <p>{{ paymentErrorMsg }}</p>
+            </div>
           </div>
 
           <div class="modal-body">
@@ -83,14 +87,15 @@
 
             <div class="form-group">
               <label>Référence / Note de versement :</label>
-              <input type="text" [(ngModel)]="payNotes" class="custom-input" placeholder="ex: Versement Orange Money / Espèces...">
+              <input type="text" [(ngModel)]="payNotes" class="custom-input" placeholder="ex: Versement Orange Money / Wave / Espèces...">
             </div>
           </div>
 
           <div class="modal-footer">
-            <button class="btn-secondary" (click)="cancelPayment()">Annuler</button>
-            <button class="btn-emerald" (click)="submitPayment()">
-              <span>Enregistrer & Valider</span> ✨
+            <button class="btn-secondary" (click)="cancelPayment()" [disabled]="submittingPayment">Annuler</button>
+            <button class="btn-emerald" (click)="submitPayment()" [disabled]="submittingPayment">
+              <span *ngIf="!submittingPayment">Enregistrer & Valider ✨</span>
+              <span *ngIf="submittingPayment">Traitement en cours... ⏳</span>
             </button>
           </div>
         </div>
@@ -170,7 +175,7 @@
                 </td>
                 <td>
                   <button class="btn-action-pay" (click)="openPaymentModal(c)">
-                    💳 Payer (30k F)
+                    💳 Encaisser (30 000 FCFA)
                   </button>
                 </td>
                 <td>
@@ -205,7 +210,7 @@
                 <th>Paiement #</th>
                 <th>Entreprise</th>
                 <th>Période Réglée</th>
-                <th>Montant Verse</th>
+                <th>Montant Versé</th>
                 <th>Date d'Encaissement</th>
                 <th>Notes / Référence</th>
               </tr>
@@ -215,8 +220,8 @@
                 <td class="cell-id">#{{ p.id }}</td>
                 <td class="cell-name"><strong>{{ p.companyName }}</strong></td>
                 <td><span class="period-badge">📅 {{ p.periodMonth }} {{ p.periodYear }}</span></td>
-                <td><strong class="amount-green">{{ p.amount }} FCFA</strong></td>
-                <td class="cell-date">{{ p.paymentDate | date:'short' }}</td>
+                <td><strong class="amount-green">{{ p.amount | fcfa }}</strong></td>
+                <td class="cell-date">{{ p.paymentDate | date:'dd/MM/yyyy HH:mm' }}</td>
                 <td class="cell-notes">{{ p.notes || '-' }}</td>
               </tr>
               <tr *ngIf="payments.length === 0">
@@ -234,8 +239,8 @@
             <div class="kpi-icon">🔮</div>
             <div class="kpi-content">
               <div class="kpi-label">Revenu Mensuel Espéré (Recouvrement)</div>
-              <div class="kpi-number text-gold">{{ stats.expectedMonthlyRevenue || 0 }} FCFA</div>
-              <div class="kpi-desc">Calcul : {{ stats.totalCompanies }} clients × {{ stats.monthlyTariff }} FCFA/mois</div>
+              <div class="kpi-number text-gold">{{ stats.expectedMonthlyRevenue | fcfa }}</div>
+              <div class="kpi-desc">Calcul : {{ stats.totalCompanies }} clients × {{ stats.monthlyTariff | fcfa }}/mois</div>
             </div>
           </div>
 
@@ -243,15 +248,15 @@
             <div class="kpi-icon">💰</div>
             <div class="kpi-content">
               <div class="kpi-label">CA Abonnements Encaissés (SiraShop)</div>
-              <div class="kpi-number text-green">{{ stats.totalSubscriptionRevenue || 0 }} FCFA</div>
-              <div class="kpi-desc">Total des abonnements perçus en caisse SaaS</div>
+              <div class="kpi-number text-green">{{ stats.totalSubscriptionRevenue | fcfa }}</div>
+              <div class="kpi-desc">Total des abonnements perçus en caisse centrale</div>
             </div>
           </div>
 
           <div class="kpi-card blue-border">
             <div class="kpi-icon">🏢</div>
             <div class="kpi-content">
-              <div class="kpi-label">Entreprises Clients</div>
+              <div class="kpi-label">Entreprises Clientes</div>
               <div class="kpi-number text-blue">{{ stats.totalCompanies }}</div>
               <div class="kpi-desc">{{ stats.activeCompanies }} actives | {{ stats.blockedCompanies }} suspendues</div>
             </div>

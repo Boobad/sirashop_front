@@ -2,15 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { FcfaPipe } from '../../../shared/pipes/fcfa.pipe';
 import { CompanyService } from '../../../core/services/company.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { SuperAdminService, SuperAdminStats, AdminUser, SubscriptionPayment } from '../../../core/services/super-admin.service';
 import { Company } from '../../../core/services/company.model';
 
 @Component({
   selector: 'app-super-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FcfaPipe],
   templateUrl: './super-admin.html',
   styleUrls: ['./super-admin.css']
 })
@@ -32,13 +35,14 @@ export class SuperAdminComponent implements OnInit {
   payAmount: number = 30000;
   payMonth: string = 'Août';
   payNotes: string = '';
+  paymentErrorMsg: string = '';
+  submittingPayment: boolean = false;
 
   admins: AdminUser[] = [];
   newAdminUsername: string = '';
   newAdminPassword: string = '';
 
   currentUser: any = null;
-  successMessage: string = '';
 
   months: string[] = [
     'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -49,6 +53,8 @@ export class SuperAdminComponent implements OnInit {
     private companyService: CompanyService,
     private superAdminService: SuperAdminService,
     private authService: AuthService,
+    private toastService: ToastService,
+    private confirmDialogService: ConfirmDialogService,
     private router: Router
   ) {}
 
@@ -68,58 +74,129 @@ export class SuperAdminComponent implements OnInit {
   }
 
   loadCompanies(): void {
-    this.companyService.getCompanies().subscribe(data => {
-      this.companies = data;
+    this.companyService.getCompanies().subscribe({
+      next: (data) => {
+        this.companies = data;
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur chargement entreprises' });
+      }
     });
   }
 
   loadStats(): void {
-    this.superAdminService.getStats().subscribe(data => {
-      this.stats = data;
+    this.superAdminService.getStats().subscribe({
+      next: (data) => {
+        this.stats = data;
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur chargement statistiques' });
+      }
     });
   }
 
   loadPayments(): void {
-    this.superAdminService.getAllPayments().subscribe(data => {
-      this.payments = data;
+    this.superAdminService.getAllPayments().subscribe({
+      next: (data) => {
+        this.payments = data;
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur historique paiements' });
+      }
     });
   }
 
   loadAdmins(): void {
-    this.superAdminService.getSuperAdmins().subscribe(data => {
-      this.admins = data;
+    this.superAdminService.getSuperAdmins().subscribe({
+      next: (data) => {
+        this.admins = data;
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur chargement administrateurs' });
+      }
     });
   }
 
   createCompany(): void {
-    if (!this.newCompanyName.trim() || !this.newOwnerUsername.trim() || !this.newOwnerPassword.trim()) {
+    if (!this.newCompanyName.trim()) {
+      this.toastService.warning('Veuillez renseigner le nom de l\'entreprise.');
+      return;
+    }
+    if (!this.newOwnerUsername.trim()) {
+      this.toastService.warning('Veuillez définir un identifiant pour le Propriétaire (Boss).');
+      return;
+    }
+    if (!this.newOwnerPassword.trim()) {
+      this.toastService.warning('Veuillez saisir un mot de passe par défaut.');
       return;
     }
 
     this.companyService.createCompanyWithOwner({
-      companyName: this.newCompanyName,
-      ownerUsername: this.newOwnerUsername,
-      ownerPassword: this.newOwnerPassword
-    }).subscribe(data => {
-      this.companies.push(data);
-      this.successMessage = `🎉 Entreprise '${data.name}' créée avec son compte Propriétaire (${this.newOwnerUsername}) ! Mot de passe par défaut: ${this.newOwnerPassword}`;
-      
-      this.newCompanyName = '';
-      this.newOwnerUsername = '';
-      this.newOwnerPassword = '';
-      this.loadStats();
-
-      setTimeout(() => this.successMessage = '', 7000);
+      companyName: this.newCompanyName.trim(),
+      ownerUsername: this.newOwnerUsername.trim(),
+      ownerPassword: this.newOwnerPassword.trim()
+    }).subscribe({
+      next: (data) => {
+        this.companies.push(data);
+        this.toastService.success(
+          `Compte créé ! Un email avec les identifiants pour l'entreprise '${data.name}' (${this.newOwnerUsername}) a été préparé.`,
+          { title: '🎉 Inscription Réussie', duration: 6000 }
+        );
+        
+        this.newCompanyName = '';
+        this.newOwnerUsername = '';
+        this.newOwnerPassword = '';
+        this.loadStats();
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Échec de la création d\'entreprise' });
+      }
     });
   }
 
-  toggleCompany(company: Company): void {
+  async toggleCompany(company: Company): Promise<void> {
     if (!company.id) return;
 
-    this.companyService.toggleCompanyActive(company.id).subscribe(updated => {
-      company.active = updated.active;
-      this.loadStats();
-    });
+    if (company.active) {
+      // Confirmation de suspension
+      const confirmed = await this.confirmDialogService.confirm({
+        title: 'Suspension d\'entreprise',
+        message: `Voulez-vous vraiment suspendre l'accès de l'entreprise '${company.name}' ? Tous les accès utilisateurs de cette entreprise seront bloqués.`,
+        confirmText: 'Suspendre l\'accès',
+        cancelText: 'Annuler',
+        type: 'danger',
+        icon: '🛑'
+      });
+
+      if (!confirmed) return;
+
+      this.companyService.toggleCompanyActive(company.id).subscribe({
+        next: (updated) => {
+          company.active = updated.active;
+          this.toastService.warning(`L'entreprise '${company.name}' a été suspendue avec succès.`, {
+            title: '🛑 Accès Suspendu'
+          });
+          this.loadStats();
+        },
+        error: (err) => {
+          this.toastService.error(err, { title: 'Erreur lors de la suspension' });
+        }
+      });
+    } else {
+      // Réactivation
+      this.companyService.toggleCompanyActive(company.id).subscribe({
+        next: (updated) => {
+          company.active = updated.active;
+          this.toastService.success(`L'accès de l'entreprise '${company.name}' a été rétabli.`, {
+            title: '✅ Entreprise Débloquée'
+          });
+          this.loadStats();
+        },
+        error: (err) => {
+          this.toastService.error(err, { title: 'Erreur lors de la réactivation' });
+        }
+      });
+    }
   }
 
   openPaymentModal(company: Company): void {
@@ -127,51 +204,84 @@ export class SuperAdminComponent implements OnInit {
     this.payAmount = 30000;
     this.payMonth = 'Août';
     this.payNotes = '';
+    this.paymentErrorMsg = '';
+    this.submittingPayment = false;
   }
 
   cancelPayment(): void {
     this.selectedCompanyForPayment = null;
+    this.paymentErrorMsg = '';
+    this.submittingPayment = false;
   }
 
   submitPayment(): void {
-    if (!this.selectedCompanyForPayment || !this.selectedCompanyForPayment.id) return;
+    if (!this.selectedCompanyForPayment || !this.selectedCompanyForPayment.id || this.submittingPayment) return;
+
+    const companyName = this.selectedCompanyForPayment.name;
+    const month = this.payMonth;
+
+    this.submittingPayment = true;
+    this.paymentErrorMsg = '';
 
     this.superAdminService.recordPayment({
       companyId: this.selectedCompanyForPayment.id,
       amount: this.payAmount,
       periodMonth: this.payMonth,
       notes: this.payNotes
-    }).subscribe(data => {
-      this.successMessage = `🎉 Paiement de ${data.amount} FCFA enregistré pour ${this.selectedCompanyForPayment?.name} (${data.periodMonth}) ! Le compte est débloqué.`;
-      
-      const comp = this.companies.find(c => c.id === this.selectedCompanyForPayment?.id);
-      if (comp) comp.active = true;
+    }).subscribe({
+      next: (data) => {
+        this.submittingPayment = false;
+        this.paymentErrorMsg = '';
 
-      this.selectedCompanyForPayment = null;
-      this.loadStats();
-      this.loadPayments();
+        this.toastService.success(
+          `Abonnement du mois de ${data.periodMonth} 2026 enregistré avec succès. L'entreprise est active.`,
+          { title: '💳 Cotisation Enregistrée', duration: 5000 }
+        );
+        
+        const comp = this.companies.find(c => c.id === this.selectedCompanyForPayment?.id);
+        if (comp) comp.active = true;
 
-      setTimeout(() => this.successMessage = '', 5000);
+        this.selectedCompanyForPayment = null;
+        this.loadStats();
+        this.loadPayments();
+      },
+      error: (err) => {
+        this.submittingPayment = false;
+        const msg = this.toastService.extractErrorMessage(
+          err,
+          `L'entreprise '${companyName}' a déjà réglé son abonnement pour le mois de ${month} 2026.`
+        );
+        this.paymentErrorMsg = msg;
+      }
     });
   }
 
   createAdmin(): void {
-    if (!this.newAdminUsername.trim() || !this.newAdminPassword.trim()) return;
+    if (!this.newAdminUsername.trim() || !this.newAdminPassword.trim()) {
+      this.toastService.warning('Veuillez renseigner un identifiant et un mot de passe.');
+      return;
+    }
 
     this.superAdminService.createSuperAdmin({
-      username: this.newAdminUsername,
-      password: this.newAdminPassword
-    }).subscribe(data => {
-      this.admins.push(data);
-      this.newAdminUsername = '';
-      this.newAdminPassword = '';
-      this.successMessage = `✅ Administrateur '${data.username}' créé avec succès !`;
-      setTimeout(() => this.successMessage = '', 4000);
+      username: this.newAdminUsername.trim(),
+      password: this.newAdminPassword.trim()
+    }).subscribe({
+      next: (data) => {
+        this.admins.push(data);
+        this.toastService.success(`Compte Super Admin '${data.username}' créé avec succès !`);
+        this.newAdminUsername = '';
+        this.newAdminPassword = '';
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur création administrateur' });
+      }
     });
   }
 
   logout(): void {
     this.authService.logout();
+    this.toastService.info('Vous êtes déconnecté.', { duration: 2500 });
     this.router.navigate(['/login']);
   }
 }
+

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { FcfaPipe, formatFCFA } from '../../../shared/pipes/fcfa.pipe';
 import { CompanyService } from '../../../core/services/company.service';
 import { ShopService } from '../../../core/services/shop.service';
 import { UserService } from '../../../core/services/user.service';
@@ -9,6 +10,9 @@ import { InventoryService } from '../../../core/services/inventory.service';
 import { ProductService } from '../../../core/services/product.service';
 import { SaleService } from '../../../core/services/sale.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { ReceiptService, ReceiptData } from '../../../core/services/receipt.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { Company } from '../../../core/services/company.model';
 import { Shop } from '../../../core/services/shop.model';
 import { User } from '../../../core/services/user.model';
@@ -26,7 +30,7 @@ export interface DisplayProductItem {
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, FcfaPipe],
   templateUrl: './checkout.html',
   styleUrls: ['./checkout.css']
 })
@@ -51,9 +55,6 @@ export class CheckoutComponent implements OnInit {
   cart: SaleItem[] = [];
   paymentMethod: string = 'CASH';
 
-  successMessage: string = '';
-  errorMessage: string = '';
-
   // Modal Vérification Stock Inter-Boutiques (Réseau)
   showNetworkModal: boolean = false;
   selectedProductForNetwork: DisplayProductItem | null = null;
@@ -68,22 +69,30 @@ export class CheckoutComponent implements OnInit {
     private productService: ProductService,
     private saleService: SaleService,
     private authService: AuthService,
+    private toastService: ToastService,
+    private receiptService: ReceiptService,
+    private confirmDialogService: ConfirmDialogService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.currentUser = this.authService.getUser();
 
-    this.companyService.getCompanies().subscribe(data => {
-      this.companies = data;
-      if (this.currentUser && this.currentUser.companyId) {
-        this.selectedCompanyId = this.currentUser.companyId;
-      } else if (this.companies.length > 0) {
-        this.selectedCompanyId = this.companies[0].id!;
-      }
+    this.companyService.getCompanies().subscribe({
+      next: (data) => {
+        this.companies = data;
+        if (this.currentUser && this.currentUser.companyId) {
+          this.selectedCompanyId = this.currentUser.companyId;
+        } else if (this.companies.length > 0) {
+          this.selectedCompanyId = this.companies[0].id!;
+        }
 
-      if (this.selectedCompanyId) {
-        this.onCompanyChange();
+        if (this.selectedCompanyId) {
+          this.onCompanyChange();
+        }
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur chargement entreprises' });
       }
     });
   }
@@ -91,20 +100,30 @@ export class CheckoutComponent implements OnInit {
   onCompanyChange(): void {
     if (!this.selectedCompanyId) return;
 
-    this.productService.getProductsByCompany(this.selectedCompanyId).subscribe(data => {
-      this.products = data;
+    this.productService.getProductsByCompany(this.selectedCompanyId).subscribe({
+      next: (data) => {
+        this.products = data;
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur catalogue' });
+      }
     });
 
-    this.shopService.getShopsByCompany(this.selectedCompanyId).subscribe(data => {
-      this.shops = data;
-      if (this.currentUser && this.currentUser.shopId) {
-        this.selectedShopId = this.currentUser.shopId;
-      } else if (this.shops.length > 0) {
-        this.selectedShopId = this.shops[0].id!;
-      }
+    this.shopService.getShopsByCompany(this.selectedCompanyId).subscribe({
+      next: (data) => {
+        this.shops = data;
+        if (this.currentUser && this.currentUser.shopId) {
+          this.selectedShopId = this.currentUser.shopId;
+        } else if (this.shops.length > 0) {
+          this.selectedShopId = this.shops[0].id!;
+        }
 
-      if (this.selectedShopId) {
-        this.onShopChange();
+        if (this.selectedShopId) {
+          this.onShopChange();
+        }
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur chargement boutiques' });
       }
     });
   }
@@ -112,16 +131,26 @@ export class CheckoutComponent implements OnInit {
   onShopChange(): void {
     if (!this.selectedShopId) return;
 
-    this.inventoryService.getInventoryByShop(this.selectedShopId).subscribe(data => {
-      this.inventories = data;
+    this.inventoryService.getInventoryByShop(this.selectedShopId).subscribe({
+      next: (data) => {
+        this.inventories = data;
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur inventaire' });
+      }
     });
 
-    this.userService.getUsersByShop(this.selectedShopId).subscribe(data => {
-      this.sellers = data;
-      if (this.currentUser) {
-        this.selectedSellerId = this.currentUser.id;
-      } else if (this.sellers.length > 0) {
-        this.selectedSellerId = this.sellers[0].id!;
+    this.userService.getUsersByShop(this.selectedShopId).subscribe({
+      next: (data) => {
+        this.sellers = data;
+        if (this.currentUser) {
+          this.selectedSellerId = this.currentUser.id;
+        } else if (this.sellers.length > 0) {
+          this.selectedSellerId = this.sellers[0].id!;
+        }
+      },
+      error: (err) => {
+        this.toastService.error(err, { title: 'Erreur chargement vendeurs' });
       }
     });
 
@@ -149,6 +178,7 @@ export class CheckoutComponent implements OnInit {
 
   addToCart(item: DisplayProductItem): void {
     if (item.quantity <= 0) {
+      this.toastService.warning(`L'article '${item.productName}' est en rupture dans cette boutique. Vérification réseau en cours...`);
       this.openNetworkStockModal(item);
       return;
     }
@@ -156,12 +186,12 @@ export class CheckoutComponent implements OnInit {
     const existingItem = this.cart.find(c => c.productId === item.productId);
     if (existingItem) {
       if (existingItem.quantity >= item.quantity) {
-        this.errorMessage = `Stock maximum disponible atteint en boutique (${item.quantity} unités) !`;
-        setTimeout(() => this.errorMessage = '', 3000);
+        this.toastService.warning(`Stock maximum disponible atteint en boutique (${item.quantity} unités pour ${item.productName}) !`);
         return;
       }
       existingItem.quantity += 1;
       existingItem.totalPrice = existingItem.quantity * existingItem.unitPrice;
+      this.toastService.info(`Quantité de '${item.productName}' passée à ${existingItem.quantity}.`, { duration: 2500 });
     } else {
       this.cart.push({
         productId: item.productId,
@@ -170,6 +200,7 @@ export class CheckoutComponent implements OnInit {
         unitPrice: item.sellingPrice,
         totalPrice: item.sellingPrice
       });
+      this.toastService.success(`'${item.productName}' ajouté au panier.`, { duration: 2500 });
     }
   }
 
@@ -186,9 +217,10 @@ export class CheckoutComponent implements OnInit {
         this.networkInventories = data;
         this.loadingNetwork = false;
       },
-      error: () => {
+      error: (err) => {
         this.networkInventories = [];
         this.loadingNetwork = false;
+        this.toastService.error(err, { title: 'Erreur réseau de stock' });
       }
     });
   }
@@ -203,8 +235,7 @@ export class CheckoutComponent implements OnInit {
     const inv = this.inventories.find(i => i.productId === item.productId);
     const maxQty = inv ? inv.quantity : 0;
     if (item.quantity >= maxQty) {
-      this.errorMessage = `Stock maximum disponible atteint en boutique (${maxQty} unités) !`;
-      setTimeout(() => this.errorMessage = '', 3000);
+      this.toastService.warning(`Stock maximum disponible atteint en boutique (${maxQty} unités) !`);
       return;
     }
     item.quantity += 1;
@@ -225,7 +256,25 @@ export class CheckoutComponent implements OnInit {
   }
 
   removeFromCart(index: number): void {
-    this.cart.splice(index, 1);
+    const removed = this.cart.splice(index, 1);
+    if (removed.length > 0) {
+      this.toastService.info(`'${removed[0].productName}' retiré du panier.`, { duration: 2500 });
+    }
+  }
+
+  async clearCart(): Promise<void> {
+    if (this.cart.length === 0) return;
+    const confirmed = await this.confirmDialogService.confirm({
+      title: 'Vider le panier',
+      message: 'Voulez-vous vraiment retirer tous les articles du panier ?',
+      confirmText: 'Vider le panier',
+      cancelText: 'Conserver',
+      type: 'warning'
+    });
+    if (confirmed) {
+      this.cart = [];
+      this.toastService.info('Le panier a été vidé.', { duration: 2500 });
+    }
   }
 
   getTotal(): number {
@@ -233,11 +282,29 @@ export class CheckoutComponent implements OnInit {
   }
 
   validateSale(): void {
-    if (this.cart.length === 0 || !this.selectedCompanyId || !this.selectedShopId || !this.selectedSellerId) {
-      this.errorMessage = 'Veuillez sélectionner un vendeur, une boutique et au moins 1 article.';
-      setTimeout(() => this.errorMessage = '', 3000);
+    if (this.cart.length === 0) {
+      this.toastService.error('Votre panier est vide. Veuillez ajouter au moins un produit avant de valider la vente.');
       return;
     }
+
+    if (!this.selectedCompanyId || !this.selectedShopId || !this.selectedSellerId) {
+      this.toastService.error('Veuillez vous assurer qu\'une boutique et un vendeur valide sont sélectionnés.');
+      return;
+    }
+
+    const currentShop = this.shops.find(s => s.id === this.selectedShopId);
+    const currentCompany = this.companies.find(c => c.id === this.selectedCompanyId);
+    const currentSeller = this.sellers.find(u => u.id === this.selectedSellerId);
+
+    // Save copy of cart items for the receipt before resetting cart
+    const receiptItems = this.cart.map(item => ({
+      productName: item.productName || 'Article',
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      totalPrice: item.quantity * item.unitPrice
+    }));
+    const totalAmount = this.getTotal();
+    const paymentLabel = this.getPaymentLabel(this.paymentMethod);
 
     this.saleService.processSale({
       companyId: this.selectedCompanyId,
@@ -247,21 +314,60 @@ export class CheckoutComponent implements OnInit {
       items: this.cart
     }).subscribe({
       next: (sale) => {
-        this.successMessage = `🎉 Vente #${sale.id} validée ! Montant Total: ${sale.totalAmount} FCFA`;
+        const receiptData: ReceiptData = {
+          saleId: sale.id,
+          ticketNumber: `TICK-${sale.id}`,
+          date: new Date(),
+          companyName: currentCompany ? currentCompany.name : 'SiraShop Entreprise',
+          shopName: currentShop ? currentShop.name : 'Boutique Principale',
+          shopAddress: currentShop?.address || 'Point de vente',
+          sellerName: currentSeller ? `${currentSeller.username} (${currentSeller.role})` : 'Vendeur Caisse',
+          items: receiptItems,
+          totalAmount: sale.totalAmount || totalAmount,
+          paymentMethod: paymentLabel
+        };
+
+        // Toast de succès avec bouton d'action directe pour ré-ouvrir ou imprimer
+        this.toastService.success(
+          `Vente enregistrée avec succès ! (Montant : ${formatFCFA(sale.totalAmount || totalAmount)})`,
+          {
+            title: '🎉 Vente Validée',
+            duration: 6000,
+            action: {
+              label: '🖨️ Imprimer le reçu / ticket',
+              onClick: () => this.receiptService.openReceipt(receiptData)
+            }
+          }
+        );
+
+        // Ouvrir automatiquement la modale de reçu pour aperçu direct & impression
+        this.receiptService.openReceipt(receiptData);
+
         this.cart = [];
         this.searchQuery = '';
         this.onShopChange();
-        setTimeout(() => this.successMessage = '', 5000);
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Erreur lors de la validation de la vente';
-        setTimeout(() => this.errorMessage = '', 5000);
+        this.toastService.error(err, { title: 'Échec de la vente' });
       }
     });
   }
 
+  private getPaymentLabel(method: string): string {
+    switch (method) {
+      case 'CASH': return '💵 Espèces';
+      case 'ORANGE_MONEY': return '🍊 Orange Money';
+      case 'MOOV_MONEY': return '📱 Moov Money';
+      case 'WAVE': return '🌊 Wave';
+      case 'CARD': return '💳 Carte Bancaire';
+      default: return method;
+    }
+  }
+
   logout(): void {
     this.authService.logout();
+    this.toastService.info('Vous êtes déconnecté.', { duration: 2500 });
     this.router.navigate(['/login']);
   }
 }
+
