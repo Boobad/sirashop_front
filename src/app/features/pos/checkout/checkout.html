@@ -12,6 +12,9 @@
         <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'SUPER_ADMIN'">
           <a routerLink="/company-owner">🏢 Espace Propriétaire</a>
         </li>
+        <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'SUPER_ADMIN'">
+          <a routerLink="/advanced-dashboard">📊 Dashboard Avancé</a>
+        </li>
         <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'MANAGER' || currentUser?.role === 'SUPER_ADMIN'">
           <a routerLink="/stock">📦 Stocks & Catalogues</a>
         </li>

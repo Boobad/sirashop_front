@@ -1,0 +1,273 @@
+<div class="dashboard-container">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo-container">
+      <img src="assets/logo.png" alt="SiraShop Logo" class="brand-logo-img">
+      <div class="logo-text">
+        <span class="brand-name">SiraShop</span>
+        <span class="badge-pro">Pro Owner</span>
+      </div>
+    </div>
+    <nav>
+      <ul>
+        <li><a routerLink="/company-owner">🏢 Espace Propriétaire</a></li>
+        <li class="active"><a routerLink="/advanced-dashboard">📊 Dashboard Avancé</a></li>
+        <li><a routerLink="/stock">📦 Stocks & Catalogues</a></li>
+        <li><a routerLink="/pos">🛒 Caisse POS (Vendeur)</a></li>
+        <li><a routerLink="/repair">🛠️ Atelier SAV</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <header>
+      <div class="company-selector">
+        <label>Entreprise gérée : </label>
+        <select [(ngModel)]="selectedCompanyId" (change)="onCompanyChange()" [disabled]="currentUser?.role === 'COMPANY_OWNER'">
+          <option *ngFor="let c of companies" [value]="c.id">{{ c.name }}</option>
+        </select>
+      </div>
+      <div class="user-info">
+        <span>👤 <strong>{{ currentUser?.username }}</strong> ({{ currentUser?.role }})</span>
+        <button class="btn-pwd" (click)="openPasswordModal()">🔒 Sécurité / Mot de passe</button>
+        <button class="btn-logout" (click)="logout()">Déconnexion 🚪</button>
+      </div>
+    </header>
+
+    <section class="content">
+      <!-- MODAL CHANGEMENT DE MOT DE PASSE -->
+      <div *ngIf="showPasswordModal" class="modal-backdrop">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h3>🔒 Modifier mon mot de passe</h3>
+            <p>Utilisateur : <strong>{{ currentUser?.username }}</strong></p>
+          </div>
+
+          <div *ngIf="passwordSuccess" class="alert alert-success">{{ passwordSuccess }}</div>
+          <div *ngIf="passwordError" class="alert alert-danger">{{ passwordError }}</div>
+
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Ancien mot de passe :</label>
+              <input type="password" [(ngModel)]="oldPasswordInput" class="custom-input" placeholder="••••••••">
+            </div>
+
+            <div class="form-group">
+              <label>Nouveau mot de passe :</label>
+              <input type="password" [(ngModel)]="newPasswordInput" class="custom-input" placeholder="••••••••">
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-secondary" (click)="closePasswordModal()">Annuler</button>
+            <button class="btn-primary" (click)="submitChangePassword()">Changer mon mot de passe</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE TITLE -->
+      <div class="page-header">
+        <div class="page-title-group">
+          <h2>📊 Tableau de Bord Analytics & Analytics Avancés</h2>
+          <p>Analyse approfondie du Chiffre d'Affaires, top ventes, classements vendeurs et modes de paiement.</p>
+        </div>
+        <button class="btn-refresh" (click)="loadAdvancedStats()">🔄 Actualiser les données</button>
+      </div>
+
+      <!-- LOADING STATE -->
+      <div *ngIf="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des métriques et indicateurs en cours...</p>
+      </div>
+
+      <!-- ERROR STATE -->
+      <div *ngIf="error && !loading" class="alert alert-danger">
+        {{ error }}
+      </div>
+
+      <div *ngIf="stats && !loading">
+        <!-- SECTION 1 : KPI CARDS (GROWTH + GLOBAL REVENUE) -->
+        <div class="kpi-grid">
+          <!-- Carte 1: Croissance Mensuelle -->
+          <div class="kpi-card growth">
+            <div class="kpi-header">
+              <span class="kpi-title">📈 Performance Mensuelle</span>
+              <span class="growth-badge" [class.positive]="stats.revenueGrowthPercentage >= 0" [class.negative]="stats.revenueGrowthPercentage < 0">
+                <span *ngIf="stats.revenueGrowthPercentage >= 0">▲ +{{ stats.revenueGrowthPercentage | number:'1.1-2' }}%</span>
+                <span *ngIf="stats.revenueGrowthPercentage < 0">▼ {{ stats.revenueGrowthPercentage | number:'1.1-2' }}%</span>
+              </span>
+            </div>
+            <div class="kpi-value">{{ stats.currentMonthRevenue || 0 | number }} FCFA</div>
+            <div class="kpi-sub">
+              Mois dernier: <strong>{{ stats.previousMonthRevenue || 0 | number }} FCFA</strong>
+            </div>
+          </div>
+
+          <!-- Carte 2: CA Total Global -->
+          <div class="kpi-card total">
+            <div class="kpi-title">💰 Chiffre d'Affaires Global</div>
+            <div class="kpi-value">{{ stats.totalRevenue || 0 | number }} FCFA</div>
+            <div class="kpi-sub">Ventes ({{ stats.totalSalesCount || 0 }}) + Réparations ({{ stats.totalRepairsCount || 0 }})</div>
+          </div>
+
+          <!-- Carte 3: Ventes d'Articles -->
+          <div class="kpi-card sales">
+            <div class="kpi-title">🛒 CA Ventes Articles</div>
+            <div class="kpi-value text-green">{{ stats.salesRevenue || 0 | number }} FCFA</div>
+            <div class="kpi-sub">{{ stats.totalSalesCount || 0 }} transactions au total</div>
+          </div>
+
+          <!-- Carte 4: Réparations SAV -->
+          <div class="kpi-card repairs">
+            <div class="kpi-title">🛠️ CA Réparations SAV</div>
+            <div class="kpi-value text-purple">{{ stats.repairRevenue || 0 | number }} FCFA</div>
+            <div class="kpi-sub">{{ stats.totalRepairsCount || 0 }} appareils réparés</div>
+          </div>
+        </div>
+
+        <!-- SECTION 2 : GRAPHIQUES LIGNE ET PAIEMENT -->
+        <div class="grid-2-1 margin-top">
+          <!-- Graphique 1 : CA Quotidien 30 jours -->
+          <div class="card chart-card">
+            <div class="card-header-flex">
+              <div>
+                <h3>📅 Chiffre d'Affaires sur les 30 Derniers Jours</h3>
+                <p>Évolution quotidienne ventilée entre Ventes en boutique et Atelier Réparation SAV</p>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas #dailyRevenueChartCanvas></canvas>
+            </div>
+          </div>
+
+          <!-- Graphique 2 : Répartition des Modes de Paiement -->
+          <div class="card chart-card">
+            <div class="card-header-flex">
+              <div>
+                <h3>💳 Méthodes de Paiement</h3>
+                <p>Répartition par canal de paiement</p>
+              </div>
+            </div>
+            <div class="chart-container doughnut-container">
+              <canvas #paymentMethodsChartCanvas></canvas>
+            </div>
+            <!-- Payment legend summary list -->
+            <div class="payment-stats-list" *ngIf="stats.paymentMethods && stats.paymentMethods.length > 0">
+              <div *ngFor="let pm of stats.paymentMethods" class="pm-item">
+                <span class="pm-name">{{ pm.paymentMethod }}</span>
+                <span class="pm-amount">{{ pm.totalAmount | number }} F</span>
+                <span class="pm-pct">({{ pm.percentage | number:'1.0-1' }}%)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3 : TOP PRODUITS & CLASSEMENT VENDEURS -->
+        <div class="grid-2 margin-top">
+          <!-- Graphique 3 : Top 5 Produits vendus -->
+          <div class="card chart-card">
+            <div class="card-header-flex">
+              <div>
+                <h3>🏆 Top 5 Produits les Plus Vendus</h3>
+                <p>Classement en volume d'unités vendues</p>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas #topProductsChartCanvas></canvas>
+            </div>
+            <!-- Product table summary -->
+            <div class="small-table-container" *ngIf="stats.topProducts && stats.topProducts.length > 0">
+              <table class="data-table compact">
+                <thead>
+                  <tr>
+                    <th>Produit</th>
+                    <th>Quantité</th>
+                    <th>CA Généré</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let p of stats.topProducts">
+                    <td><strong>{{ p.productName }}</strong></td>
+                    <td><span class="badge-qty">{{ p.totalQuantitySold }} u.</span></td>
+                    <td><strong class="text-green">{{ p.totalRevenue | number }} FCFA</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Graphique 4 : Classement des Vendeurs -->
+          <div class="card chart-card">
+            <div class="card-header-flex">
+              <div>
+                <h3>👔 Performance & Ranking Vendeurs</h3>
+                <p>Chiffre d'affaires réalisé par chaque membre de l'équipe</p>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas #sellerPerformanceChartCanvas></canvas>
+            </div>
+            <!-- Seller table summary -->
+            <div class="small-table-container" *ngIf="stats.sellerPerformance && stats.sellerPerformance.length > 0">
+              <table class="data-table compact">
+                <thead>
+                  <tr>
+                    <th>Vendeur</th>
+                    <th>Nb Ventes</th>
+                    <th>Total CA</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let s of stats.sellerPerformance; let i = index">
+                    <td>
+                      <span class="rank-badge" [class.rank-1]="i===0" [class.rank-2]="i===1" [class.rank-3]="i===2">#{{ i+1 }}</span>
+                      <strong> {{ s.sellerName }}</strong>
+                    </td>
+                    <td>{{ s.totalSalesCount }} ventes</td>
+                    <td><strong class="text-gold">{{ s.totalRevenue | number }} FCFA</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4 : STATS PAR BOUTIQUE -->
+        <div *ngIf="stats.shopStats && stats.shopStats.length > 0" class="card margin-top">
+          <div class="card-header-flex">
+            <div>
+              <h3>🏪 Comparatif des Performances par Boutique</h3>
+              <p>Ventilation détaillée du chiffre d'affaires et de l'activité entre vos points de vente</p>
+            </div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Boutique</th>
+                <th>CA Ventes Articles</th>
+                <th>Nb Ventes</th>
+                <th>CA Réparations SAV</th>
+                <th>Nb Réparations</th>
+                <th>CA Total Cumulé</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s of stats.shopStats">
+                <td>
+                  <span class="shop-icon">🏬</span>
+                  <strong> {{ s.shopName }}</strong>
+                </td>
+                <td><span class="text-green">{{ s.salesRevenue || 0 | number }} FCFA</span></td>
+                <td>{{ s.salesCount || 0 }}</td>
+                <td><span class="text-purple">{{ s.repairRevenue || 0 | number }} FCFA</span></td>
+                <td>{{ s.repairsCount || 0 }}</td>
+                <td><strong class="text-gold">{{ s.totalRevenue || 0 | number }} FCFA</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>

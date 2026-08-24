@@ -12,6 +12,9 @@
         <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'SUPER_ADMIN'">
           <a routerLink="/company-owner">🏢 Espace Propriétaire</a>
         </li>
+        <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'SUPER_ADMIN'">
+          <a routerLink="/advanced-dashboard">📊 Dashboard Avancé</a>
+        </li>
         <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'MANAGER' || currentUser?.role === 'SUPER_ADMIN'">
           <a routerLink="/stock">📦 Stocks & Catalogues</a>
         </li>
@@ -38,6 +41,45 @@
     </header>
 
     <section class="content">
+      <!-- MODAL AJOUT VERSEMENT / ACOMPTE -->
+      <div *ngIf="showPaymentModal" class="modal-backdrop">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h3>💳 Enregistrer un Règlement</h3>
+            <p>Ticket #{{ activePaymentTicket?.id }} — {{ activePaymentTicket?.deviceModel }} ({{ activePaymentTicket?.customerName }})</p>
+          </div>
+
+          <div *ngIf="paymentSuccessMsg" class="alert alert-success">{{ paymentSuccessMsg }}</div>
+          <div *ngIf="paymentErrorMsg" class="alert alert-danger">{{ paymentErrorMsg }}</div>
+
+          <div class="modal-body" *ngIf="activePaymentTicket">
+            <div class="payment-info-box">
+              <div>Prix Estimé : <strong>{{ activePaymentTicket.estimatedPrice || 0 }} FCFA</strong></div>
+              <div>Acompte actuel : <strong>{{ activePaymentTicket.depositAmount || 0 }} FCFA</strong></div>
+              <div class="text-amber">Reste à régler : <strong>{{ (activePaymentTicket.estimatedPrice || 0) - (activePaymentTicket.depositAmount || 0) }} FCFA</strong></div>
+            </div>
+
+            <div class="form-group">
+              <label>Type d'opération :</label>
+              <select [(ngModel)]="paymentMode" class="custom-input">
+                <option value="ADDITIONAL">➕ Versement supplémentaire (ex: 5 000 F)</option>
+                <option value="SET_DEPOSIT">✏️ Définir nouvel acompte total (ex: 20 000 F)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>{{ paymentMode === 'ADDITIONAL' ? 'Montant du versement (FCFA) :' : 'Nouveau montant total de l\'acompte (FCFA) :' }}</label>
+              <input type="number" [(ngModel)]="paymentInputValue" class="custom-input" placeholder="ex: 5000">
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-secondary" (click)="closePaymentModal()">Annuler</button>
+            <button class="btn-primary" (click)="submitPaymentUpdate()">Enregistrer le Paiement</button>
+          </div>
+        </div>
+      </div>
+
       <div class="grid-2">
         <!-- FORMULAIRE DE RECEPTION D'UN APPAREIL EN PANNE -->
         <div class="card">
@@ -74,7 +116,7 @@
         <!-- LISTE ET SUIVI DES TICKETS SAV -->
         <div class="card">
           <h3>🛠️ Suivi des Réparations en Cours ({{ tickets.length }})</h3>
-          <p>Modifiez le statut d'une réparation en 1 clic</p>
+          <p>Modifiez le statut d'une réparation ou validez le paiement en 1 clic</p>
 
           <div class="tickets-list">
             <div *ngFor="let t of tickets" class="ticket-card">
@@ -90,14 +132,33 @@
               <div class="ticket-financials">
                 <span>Prix: <strong>{{ t.estimatedPrice || 0 }} FCFA</strong></span>
                 <span class="margin-left">Acompte: <strong class="deposit">{{ t.depositAmount || 0 }} FCFA</strong></span>
-                <span class="margin-left">Reste: <strong class="remaining">{{ (t.estimatedPrice || 0) - (t.depositAmount || 0) }} FCFA</strong></span>
+                <span class="margin-left">
+                  Reste: 
+                  <strong class="remaining" [class.paid]="(t.estimatedPrice || 0) - (t.depositAmount || 0) <= 0">
+                    {{ (t.estimatedPrice || 0) - (t.depositAmount || 0) > 0 ? ((t.estimatedPrice || 0) - (t.depositAmount || 0) + ' FCFA') : '0 FCFA (Soldé ✅)' }}
+                  </strong>
+                </span>
               </div>
 
               <div class="ticket-actions">
-                <label>Changer le Statut : </label>
-                <select [ngModel]="t.status" (change)="onStatusChange(t, $event)" class="status-select">
-                  <option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</option>
-                </select>
+                <div class="status-select-wrap">
+                  <label>Statut : </label>
+                  <select [ngModel]="t.status" (change)="onStatusChange(t, $event)" class="status-select">
+                    <option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</option>
+                  </select>
+                </div>
+
+                <div class="payment-action-btns">
+                  <button *ngIf="(t.estimatedPrice || 0) - (t.depositAmount || 0) > 0" class="btn-pay-full" (click)="payInFull(t)" title="Solder l'intégralité du paiement">
+                    💳 Solder (Payé)
+                  </button>
+                  <button *ngIf="(t.estimatedPrice || 0) - (t.depositAmount || 0) > 0" class="btn-add-payment" (click)="openPaymentModal(t)" title="Ajouter un versement partiel">
+                    ➕ Versement
+                  </button>
+                  <span *ngIf="(t.estimatedPrice || 0) - (t.depositAmount || 0) <= 0" class="badge-fully-paid">
+                    ✅ Payé
+                  </span>
+                </div>
               </div>
             </div>
 

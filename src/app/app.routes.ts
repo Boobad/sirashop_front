@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './features/auth/login/login';
 import { SuperAdminComponent } from './features/dashboard/super-admin/super-admin';
 import { CompanyOwnerComponent } from './features/dashboard/company-owner/company-owner';
+import { AdvancedDashboardComponent } from './features/dashboard/company-owner/advanced-dashboard/advanced-dashboard';
 import { StockManagerComponent } from './features/inventory/stock-manager/stock-manager';
 import { CheckoutComponent } from './features/pos/checkout/checkout';
 import { RepairManagerComponent } from './features/repair/repair-manager/repair-manager';
@@ -19,6 +20,12 @@ export const routes: Routes = [
   { 
     path: 'company-owner', 
     component: CompanyOwnerComponent,
+    canActivate: [authGuard],
+    data: { roles: ['SUPER_ADMIN', 'COMPANY_OWNER'] }
+  },
+  { 
+    path: 'advanced-dashboard', 
+    component: AdvancedDashboardComponent,
     canActivate: [authGuard],
     data: { roles: ['SUPER_ADMIN', 'COMPANY_OWNER'] }
   },

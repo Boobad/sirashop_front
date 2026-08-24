@@ -117,6 +117,67 @@ export class RepairManagerComponent implements OnInit {
     });
   }
 
+  // Versement / Modal de paiement
+  showPaymentModal: boolean = false;
+  activePaymentTicket: RepairTicket | null = null;
+  paymentMode: 'ADDITIONAL' | 'SET_DEPOSIT' = 'ADDITIONAL';
+  paymentInputValue: number | null = null;
+  paymentSuccessMsg: string = '';
+  paymentErrorMsg: string = '';
+
+  payInFull(ticket: RepairTicket): void {
+    if (!ticket.id) return;
+    this.repairService.updatePayment(ticket.id, { payInFull: true }).subscribe({
+      next: (updatedTicket: RepairTicket) => {
+        ticket.depositAmount = updatedTicket.depositAmount;
+        ticket.estimatedPrice = updatedTicket.estimatedPrice;
+      },
+      error: (err) => {
+        console.error('Erreur lors du règlement intégrale', err);
+      }
+    });
+  }
+
+  openPaymentModal(ticket: RepairTicket): void {
+    this.activePaymentTicket = ticket;
+    this.showPaymentModal = true;
+    this.paymentMode = 'ADDITIONAL';
+    this.paymentInputValue = null;
+    this.paymentSuccessMsg = '';
+    this.paymentErrorMsg = '';
+  }
+
+  closePaymentModal(): void {
+    this.showPaymentModal = false;
+    this.activePaymentTicket = null;
+  }
+
+  submitPaymentUpdate(): void {
+    if (!this.activePaymentTicket || !this.activePaymentTicket.id || !this.paymentInputValue || this.paymentInputValue <= 0) {
+      this.paymentErrorMsg = 'Veuillez saisir un montant valide (supérieur à 0).';
+      return;
+    }
+
+    const payload = this.paymentMode === 'ADDITIONAL' 
+      ? { additionalPayment: this.paymentInputValue }
+      : { depositAmount: this.paymentInputValue };
+
+    this.repairService.updatePayment(this.activePaymentTicket.id, payload).subscribe({
+      next: (updatedTicket: RepairTicket) => {
+        this.activePaymentTicket!.depositAmount = updatedTicket.depositAmount;
+        this.activePaymentTicket!.estimatedPrice = updatedTicket.estimatedPrice;
+        this.paymentSuccessMsg = '✅ Paiement enregistré avec succès !';
+        this.paymentErrorMsg = '';
+        setTimeout(() => {
+          this.closePaymentModal();
+        }, 1500);
+      },
+      error: (err) => {
+        this.paymentErrorMsg = err.error?.message || 'Erreur lors de la mise à jour du paiement.';
+      }
+    });
+  }
+
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);

@@ -3,6 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { RepairTicket, RepairStatus } from './repair.model';
 
+export interface PaymentUpdateRequest {
+  payInFull?: boolean;
+  depositAmount?: number;
+  additionalPayment?: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -22,6 +28,10 @@ export class RepairService {
     });
   }
 
+  updatePayment(ticketId: number, paymentData: PaymentUpdateRequest): Observable<RepairTicket> {
+    return this.http.put<RepairTicket>(`${this.apiUrl}/${ticketId}/payment`, paymentData);
+  }
+
   getTicketsByShop(shopId: number): Observable<RepairTicket[]> {
     return this.http.get<RepairTicket[]>(`${this.apiUrl}/shop/${shopId}`);
   }
@@ -30,3 +40,4 @@ export class RepairService {
     return this.http.get<RepairTicket[]>(`${this.apiUrl}/company/${companyId}`);
   }
 }
+
