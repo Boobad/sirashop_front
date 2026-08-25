@@ -71,8 +71,78 @@
         </button>
       </form>
 
-      <div class="login-footer">
-        <p class="secure-badge">🔒 Connexion sécurisée SiraShop</p>
+  <!-- MODALE OBLIGATOIRE DE CHANGEMENT DE MOT DE PASSE (1ERE CONNEXION) -->
+  <div *ngIf="showMandatoryPasswordModal" class="mandatory-password-backdrop">
+    <div class="mandatory-password-card">
+      <div class="mandatory-header">
+        <div class="security-shield-icon">🛡️</div>
+        <h2>Première Connexion</h2>
+        <p class="mandatory-subtitle">
+          Pour sécuriser votre compte <strong>{{ loggedInUser?.username }}</strong>, veuillez définir votre nouveau mot de passe personnel.
+        </p>
+      </div>
+
+      <div *ngIf="mandatoryPasswordError" class="alert alert-danger">
+        ⚠️ {{ mandatoryPasswordError }}
+      </div>
+
+      <form (ngSubmit)="submitMandatoryPasswordChange()" class="login-form">
+        <div class="form-group">
+          <label>Mot de passe temporaire actuel :</label>
+          <input 
+            type="password" 
+            [(ngModel)]="mandatoryOldPassword" 
+            name="mandatoryOldPassword"
+            placeholder="Mot de passe temporaire..."
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label>Nouveau mot de passe (min. 6 caractères) :</label>
+          <input 
+            type="password" 
+            [(ngModel)]="mandatoryNewPassword" 
+            name="mandatoryNewPassword"
+            placeholder="Nouveau mot de passe sécurisé..."
+            minlength="6"
+            required
+          >
+          <span class="input-hint">Choisissez un mot de passe fort que vous retiendrez facilement.</span>
+        </div>
+
+        <div class="form-group">
+          <label>Confirmer le nouveau mot de passe :</label>
+          <input 
+            type="password" 
+            [(ngModel)]="mandatoryConfirmPassword" 
+            name="mandatoryConfirmPassword"
+            placeholder="Retapez le nouveau mot de passe..."
+            required
+          >
+        </div>
+
+        <div class="mandatory-actions">
+          <button 
+            type="submit" 
+            [disabled]="submittingMandatoryPassword" 
+            class="btn-save-password"
+          >
+            {{ submittingMandatoryPassword ? 'Enregistrement en cours...' : '✨ Valider & Accéder à mon compte' }}
+          </button>
+
+          <button 
+            type="button" 
+            (click)="cancelMandatoryModal()" 
+            class="btn-cancel-logout"
+          >
+            Annuler & Se déconnecter 🚪
+          </button>
+        </div>
+      </form>
+
+      <div class="mandatory-footer">
+        <p>🔒 Cette étape est obligatoire pour activer votre accès aux modules de SiraShop.</p>
       </div>
     </div>
   </div>

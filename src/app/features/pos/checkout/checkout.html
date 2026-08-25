@@ -157,19 +157,22 @@
             >
               <div class="product-card-top">
                 <div class="product-title">{{ p.productName }}</div>
+                <div class="product-price">{{ p.sellingPrice | fcfa }}</div>
+                <div class="product-stock" [class.out-of-stock]="p.quantity <= 0">
+                  {{ p.quantity > 0 ? ('En stock : ' + p.quantity + ' unités') : '⚠️ Rupture de stock (0)' }}
+                </div>
+              </div>
+
+              <div class="product-card-actions">
                 <button 
                   *ngIf="p.quantity <= 0" 
                   class="btn-network-check" 
-                  (click)="openNetworkStockModal(p); $event.stopPropagation()"
-                  title="Vérifier le stock dans vos autres boutiques"
+                  (click)="openNetworkStockModal(p, $event); $event.stopPropagation()" 
+                  title="Vérifier dans les autres boutiques de l'entreprise"
                 >
-                  🔎 Vérifier Réseau
+                  🔍 Vérifier autre boutique
                 </button>
-              </div>
-
-              <div class="product-price">{{ p.sellingPrice | fcfa }}</div>
-              <div class="product-stock" [class.out-of-stock]="p.quantity <= 0">
-                {{ p.quantity > 0 ? (p.quantity + ' en stock') : 'Rupture de stock' }}
+                <div class="product-add">{{ p.quantity > 0 ? '+ Ajouter au panier' : '⚠️ Vérifier réseau' }}</div>
               </div>
             </div>
 
@@ -179,43 +182,43 @@
           </div>
         </div>
 
-        <!-- PANIER / TICKET EN COURS -->
-        <div class="card cart-card">
+        <!-- PANIER / CAISSE / DETAIL D'ACHAT -->
+        <div class="card checkout-card">
           <div class="header-flex">
-            <h3>🛒 Ticket en Cours</h3>
-            <button *ngIf="cart.length > 0" class="btn-clear-cart" (click)="clearCart()">
-              Vider le panier 🗑️
+            <h3>🛒 Détails de la Vente</h3>
+            <button *ngIf="cart.length > 0" class="btn-clear-cart" (click)="clearCart()" title="Vider tous les articles du panier">
+              🗑️ Vider le panier
             </button>
           </div>
-
+          
           <table class="cart-table">
             <thead>
               <tr>
                 <th>Article</th>
-                <th>Qté</th>
-                <th>Prix</th>
+                <th>Prix Unitaire</th>
+                <th>Quantité</th>
                 <th>Total</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let item of cart; let i = index">
-                <td>{{ item.productName }}</td>
+                <td><strong>{{ item.productName }}</strong></td>
                 <td>
-                  <div class="qty-control">
-                    <button class="qty-btn" (click)="decreaseQty(item, i)">-</button>
+                  <input type="number" [(ngModel)]="item.unitPrice" (change)="updateItemPrice(item)" class="price-input"> FCFA
+                </td>
+                <td>
+                  <div class="qty-controls">
+                    <button class="btn-qty" (click)="decreaseQty(item, i)">-</button>
                     <span class="qty-val">{{ item.quantity }}</span>
-                    <button class="qty-btn" (click)="increaseQty(item)">+</button>
+                    <button class="btn-qty" (click)="increaseQty(item)">+</button>
                   </div>
                 </td>
-                <td>{{ item.unitPrice | fcfa }}</td>
-                <td><strong>{{ (item.quantity * item.unitPrice) | fcfa }}</strong></td>
-                <td>
-                  <button class="btn-remove" (click)="removeFromCart(i)">✕</button>
-                </td>
+                <td><strong class="item-total">{{ (item.quantity * item.unitPrice) | fcfa }}</strong></td>
+                <td><button class="btn-remove" (click)="removeFromCart(i)" title="Retirer l'article">✕</button></td>
               </tr>
               <tr *ngIf="cart.length === 0">
-                <td colspan="5" class="empty-state">Le panier est vide. Cliquez sur un article du catalogue pour l'ajouter.</td>
+                <td colspan="5" class="empty-state">Votre panier est vide. Veuillez sélectionner des articles.</td>
               </tr>
             </tbody>
           </table>
@@ -241,6 +244,7 @@
               </button>
             </div>
           </div>
+
         </div>
       </div>
 

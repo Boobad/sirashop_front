@@ -22,7 +22,7 @@ export class CompanyService {
   createCompanyWithOwner(data: {
     companyName: string;
     ownerUsername: string;
-    ownerPassword: string;
+    ownerPassword?: string;
     ownerName?: string;
     phone?: string;
     hasSalesEnabled?: boolean;

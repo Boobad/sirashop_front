@@ -2,8 +2,6 @@
    SIRASHOP DESIGN SYSTEM - THEME ESPACE SPATIAL ANIME GLOBAL (TOUTES LES PAGES)
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 :root {
   /* Cosmic Dark Palette */
   --bg-deep: #020617;
@@ -477,4 +475,64 @@ button {
   padding: 2.5rem !important;
   color: var(--text-muted) !important;
   font-weight: 500 !important;
+}
+
+/* --------------------------------------------------------------------------
+   DEFAULT PASSWORD NOTICE & BADGES
+   -------------------------------------------------------------------------- */
+.default-password-info {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px dashed rgba(245, 158, 11, 0.4);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.default-password-info span {
+  font-size: 0.88rem;
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+.default-password-info strong {
+  background: rgba(245, 158, 11, 0.25);
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+  color: #fff;
+}
+
+.default-password-info small {
+  color: #94a3b8;
+  font-size: 0.76rem;
+}
+
+.default-password-badge {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  font-size: 0.88rem;
+  color: #fbbf24;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.default-password-badge strong {
+  background: rgba(245, 158, 11, 0.25);
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  font-family: monospace;
+  color: #fff;
+}
+
+.default-password-badge .badge-hint {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: normal;
 }

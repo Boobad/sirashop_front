@@ -7,11 +7,13 @@ export type UserRole = 'SUPER_ADMIN' | 'COMPANY_OWNER' | 'MANAGER' | 'SELLER' | 
 export interface LoginResponse {
   token: string;
   id: number;
+  email?: string;
   username: string;
   firstName?: string;
   lastName?: string;
   phone?: string;
   role: UserRole;
+  mustChangePassword?: boolean;
   companyId?: number;
   shopId?: number;
   shopName?: string;
@@ -46,8 +48,21 @@ export class AuthService {
     return data ? JSON.parse(data) : null;
   }
 
+  updateLocalUser(updates: Partial<LoginResponse>): void {
+    const current = this.getUser();
+    if (current) {
+      const updated = { ...current, ...updates };
+      localStorage.setItem(this.USER_KEY, JSON.stringify(updated));
+    }
+  }
+
   isLoggedIn(): boolean {
     return this.getUser() !== null;
+  }
+
+  mustChangePassword(): boolean {
+    const user = this.getUser();
+    return !!user?.mustChangePassword;
   }
 
   hasRole(allowedRoles: UserRole[]): boolean {

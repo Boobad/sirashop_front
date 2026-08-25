@@ -44,7 +44,7 @@ export class SuperAdminService {
     return this.http.get<SuperAdminStats>(`${this.apiUrl}/stats`);
   }
 
-  createSuperAdmin(admin: { username: string; password: string }): Observable<AdminUser> {
+  createSuperAdmin(admin: { username: string; password?: string }): Observable<AdminUser> {
     return this.http.post<AdminUser>(`${this.apiUrl}/admins`, admin);
   }
 

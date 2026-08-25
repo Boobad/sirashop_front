@@ -149,15 +149,11 @@ export class SuperAdminComponent implements OnInit {
       this.toastService.warning('Veuillez définir un identifiant pour le Propriétaire (Boss).');
       return;
     }
-    if (!this.newOwnerPassword.trim()) {
-      this.toastService.warning('Veuillez saisir un mot de passe par défaut.');
-      return;
-    }
 
     this.companyService.createCompanyWithOwner({
       companyName: this.newCompanyName.trim(),
       ownerUsername: this.newOwnerUsername.trim(),
-      ownerPassword: this.newOwnerPassword.trim(),
+      ownerPassword: this.newOwnerPassword.trim() || undefined,
       ownerName: this.newOwnerName.trim() || undefined,
       phone: this.newPhone.trim() || undefined,
       hasSalesEnabled: this.newHasSales,
@@ -341,14 +337,14 @@ export class SuperAdminComponent implements OnInit {
   }
 
   createAdmin(): void {
-    if (!this.newAdminUsername.trim() || !this.newAdminPassword.trim()) {
-      this.toastService.warning('Veuillez renseigner un identifiant et un mot de passe.');
+    if (!this.newAdminUsername.trim()) {
+      this.toastService.warning('Veuillez renseigner un identifiant pour le Super Admin.');
       return;
     }
 
     this.superAdminService.createSuperAdmin({
       username: this.newAdminUsername.trim(),
-      password: this.newAdminPassword.trim()
+      password: this.newAdminPassword.trim() || undefined
     }).subscribe({
       next: (data) => {
         this.admins.push(data);

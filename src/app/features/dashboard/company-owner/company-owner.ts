@@ -288,10 +288,6 @@ export class CompanyOwnerComponent implements OnInit {
       this.toastService.warning('Veuillez renseigner un identifiant pour l\'employé.');
       return;
     }
-    if (!this.newPassword.trim()) {
-      this.toastService.warning('Veuillez définir un mot de passe temporaire.');
-      return;
-    }
     if (!this.selectedCompanyId) {
       this.toastService.error('Aucune entreprise sélectionnée.');
       return;
@@ -302,7 +298,7 @@ export class CompanyOwnerComponent implements OnInit {
 
     this.userService.createUser({
       username: username,
-      password: this.newPassword.trim(),
+      password: this.newPassword.trim() || undefined,
       firstName: this.newFirstName.trim() || undefined,
       lastName: this.newLastName.trim() || undefined,
       phone: this.newPhone.trim() || undefined,

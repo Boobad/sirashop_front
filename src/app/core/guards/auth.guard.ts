@@ -13,6 +13,13 @@ export const authGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
+  // Vérification de changement de mot de passe obligatoire (1ère connexion)
+  if (authService.mustChangePassword()) {
+    toastService.warning('Première connexion : Veuillez définir votre nouveau mot de passe pour continuer.', { duration: 6000 });
+    router.navigate(['/login']);
+    return false;
+  }
+
   const user = authService.getUser();
 
   // 1. Vérification des rôles

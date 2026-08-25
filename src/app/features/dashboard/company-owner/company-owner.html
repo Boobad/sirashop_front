@@ -314,7 +314,10 @@
 
             <input type="text" [(ngModel)]="newPhone" placeholder="Numéro de téléphone...">
             <input type="text" [(ngModel)]="newUsername" placeholder="Identifiant de connexion...">
-            <input type="password" [(ngModel)]="newPassword" placeholder="Mot de passe temporaire...">
+            <div class="default-password-info">
+              <span>🔑 Mot de passe initial : <strong>P@ssw0rd</strong></span>
+              <small>Attribué automatiquement (changement obligatoire à la 1ère connexion)</small>
+            </div>
             
             <label class="input-label">Rôle de l'employé :</label>
             <select [(ngModel)]="newRole">
