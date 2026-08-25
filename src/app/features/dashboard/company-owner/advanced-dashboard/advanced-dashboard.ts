@@ -10,7 +10,8 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { UserService } from '../../../../core/services/user.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { Company } from '../../../../core/services/company.model';
-import { AdvancedStats } from '../../../../core/services/advanced-stats.model';
+import { User } from '../../../../core/services/user.model';
+import { AdvancedStats, SellerPerformance } from '../../../../core/services/advanced-stats.model';
 
 Chart.register(...registerables);
 
@@ -23,6 +24,7 @@ Chart.register(...registerables);
 })
 export class AdvancedDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   companies: Company[] = [];
+  users: User[] = [];
   selectedCompanyId: number | null = null;
   currentUser: any = null;
   stats: AdvancedStats | null = null;
@@ -112,6 +114,18 @@ export class AdvancedDashboardComponent implements OnInit, AfterViewInit, OnDest
     this.loading = true;
     this.error = null;
 
+    // Charger simultanément la liste des utilisateurs pour faire correspondre les identifiants/emails avec prénom et nom
+    this.userService.getUsersByCompany(this.selectedCompanyId).subscribe({
+      next: (users) => {
+        this.users = users || [];
+        if (this.stats) {
+          this.cdr.detectChanges();
+          setTimeout(() => this.renderCharts(), 50);
+        }
+      },
+      error: () => {}
+    });
+
     this.dashboardService.getAdvancedStats(this.selectedCompanyId).subscribe({
       next: (data) => {
         this.stats = data;
@@ -125,6 +139,44 @@ export class AdvancedDashboardComponent implements OnInit, AfterViewInit, OnDest
         this.error = 'Erreur lors du chargement des statistiques avancées.';
       }
     });
+  }
+
+  getSellerDisplayName(s: SellerPerformance): string {
+    if (!s) return 'Vendeur';
+
+    // 1. Si le backend renvoie directement le prénom et/ou nom
+    if (s.firstName || s.lastName) {
+      return `${s.firstName || ''} ${s.lastName || ''}`.trim();
+    }
+    if (s.sellerFirstName || s.sellerLastName) {
+      return `${s.sellerFirstName || ''} ${s.sellerLastName || ''}`.trim();
+    }
+
+    // 2. Recherche dans la liste des utilisateurs par ID ou nom d'utilisateur
+    const found = this.users.find(u =>
+      (s.sellerId && u.id === s.sellerId) ||
+      (s.sellerName && u.username === s.sellerName)
+    );
+
+    if (found && (found.firstName || found.lastName)) {
+      return `${found.firstName || ''} ${found.lastName || ''}`.trim();
+    }
+
+    // 3. Si sellerName est un email (ex: moussa.diarra@gmail.com), formater proprement en "Moussa Diarra"
+    if (s.sellerName) {
+      if (s.sellerName.includes('@')) {
+        const localPart = s.sellerName.split('@')[0];
+        return localPart
+          .replace(/[._-]/g, ' ')
+          .split(' ')
+          .filter(Boolean)
+          .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ');
+      }
+      return s.sellerName;
+    }
+
+    return `Vendeur #${s.sellerId || ''}`;
   }
 
   private destroyCharts(): void {
@@ -289,7 +341,7 @@ export class AdvancedDashboardComponent implements OnInit, AfterViewInit, OnDest
 
     // 3. Seller Performance Chart (Vertical Bar Chart)
     if (this.sellerPerformanceCanvas && this.stats.sellerPerformance) {
-      const sellers = this.stats.sellerPerformance.map(s => s.sellerName);
+      const sellers = this.stats.sellerPerformance.map(s => this.getSellerDisplayName(s));
       const revenues = this.stats.sellerPerformance.map(s => s.totalRevenue);
 
       const ctx = this.sellerPerformanceCanvas.nativeElement.getContext('2d');

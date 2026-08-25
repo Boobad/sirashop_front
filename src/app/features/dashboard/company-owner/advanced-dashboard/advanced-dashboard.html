@@ -224,7 +224,10 @@
                   <tr *ngFor="let s of stats.sellerPerformance; let i = index">
                     <td>
                       <span class="rank-badge" [class.rank-1]="i===0" [class.rank-2]="i===1" [class.rank-3]="i===2">#{{ i+1 }}</span>
-                      <strong> {{ s.sellerName }}</strong>
+                      <strong> {{ getSellerDisplayName(s) }}</strong>
+                      <div *ngIf="s.sellerName && s.sellerName !== getSellerDisplayName(s) && !s.sellerName.includes('@')" style="font-size: 0.72rem; color: #94a3b8;">
+                        @{{ s.sellerName }}
+                      </div>
                     </td>
                     <td>{{ s.totalSalesCount }} ventes</td>
                     <td><strong class="text-gold">{{ s.totalRevenue | fcfa }}</strong></td>

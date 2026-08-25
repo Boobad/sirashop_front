@@ -15,6 +15,18 @@ export class UserService {
     return this.http.post<User>(this.apiUrl, user);
   }
 
+  updateUser(userId: number, user: Partial<User>): Observable<User> {
+    return this.http.put<User>(`${this.apiUrl}/${userId}`, user);
+  }
+
+  toggleUserStatus(userId: number): Observable<User> {
+    return this.http.put<User>(`${this.apiUrl}/${userId}/toggle-active`, {});
+  }
+
+  deleteUser(userId: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${userId}`);
+  }
+
   changePassword(userId: number, oldPassword: string, newPassword: string): Observable<any> {
     return this.http.put(`${this.apiUrl}/change-password`, { userId, oldPassword, newPassword });
   }

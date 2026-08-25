@@ -18,9 +18,8 @@
     <!-- Printable Thermal Receipt Area -->
     <div class="receipt-paper" id="printable-receipt">
       <div class="receipt-header">
-        <div class="receipt-brand">✨ SIRASHOP MALI</div>
-        <div class="receipt-company">{{ receiptService.receiptData()?.companyName || 'SIRASHOP S.A.' }}</div>
-        <div class="receipt-shop">{{ receiptService.receiptData()?.shopName || 'Point de Vente' }}</div>
+        <div class="receipt-company-title">{{ receiptService.receiptData()?.companyName || 'ENTREPRISE' }}</div>
+        <div class="receipt-shop-name">{{ receiptService.receiptData()?.shopName || 'Point de Vente' }}</div>
         <div *ngIf="receiptService.receiptData()?.shopAddress" class="receipt-address">
           📍 {{ receiptService.receiptData()?.shopAddress }}
         </div>

@@ -19,6 +19,10 @@ export interface TopProduct {
 export interface SellerPerformance {
   sellerId: number;
   sellerName: string;
+  sellerFirstName?: string;
+  sellerLastName?: string;
+  firstName?: string;
+  lastName?: string;
   totalSalesCount: number;
   totalRevenue: number;
 }

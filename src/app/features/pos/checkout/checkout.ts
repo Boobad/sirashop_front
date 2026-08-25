@@ -306,6 +306,11 @@ export class CheckoutComponent implements OnInit {
     const totalAmount = this.getTotal();
     const paymentLabel = this.getPaymentLabel(this.paymentMethod);
 
+    const companyNameResolved = currentCompany?.name
+      || this.currentUser?.companyName
+      || (this.companies.length > 0 ? this.companies[0].name : '')
+      || 'Entreprise';
+
     this.saleService.processSale({
       companyId: this.selectedCompanyId,
       shopId: this.selectedShopId,
@@ -318,9 +323,9 @@ export class CheckoutComponent implements OnInit {
           saleId: sale.id,
           ticketNumber: `TICK-${sale.id}`,
           date: new Date(),
-          companyName: currentCompany ? currentCompany.name : 'SiraShop Entreprise',
-          shopName: currentShop ? currentShop.name : 'Boutique Principale',
-          shopAddress: currentShop?.address || 'Point de vente',
+          companyName: companyNameResolved,
+          shopName: currentShop ? currentShop.name : 'Boutique',
+          shopAddress: currentShop?.address || '',
           sellerName: currentSeller ? `${currentSeller.username} (${currentSeller.role})` : 'Vendeur Caisse',
           items: receiptItems,
           totalAmount: sale.totalAmount || totalAmount,

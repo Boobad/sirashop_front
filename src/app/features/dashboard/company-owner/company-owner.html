@@ -65,6 +65,67 @@
         </div>
       </div>
 
+      <!-- MODAL MODIFICATION EMPLOYE -->
+      <div *ngIf="showEditUserModal" class="modal-backdrop" (click)="closeEditUserModal()">
+        <div class="modal-box" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>✏️ Modifier l'Employé</h3>
+            <p>Compte : <strong>@{{ editingUser?.username }}</strong></p>
+          </div>
+
+          <div *ngIf="editUserError" class="alert alert-danger">{{ editUserError }}</div>
+
+          <div class="modal-body">
+            <div class="grid-inputs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+              <div class="form-group">
+                <label>Prénom :</label>
+                <input type="text" [(ngModel)]="editFirstName" class="custom-input" placeholder="Prénom...">
+              </div>
+              <div class="form-group">
+                <label>Nom :</label>
+                <input type="text" [(ngModel)]="editLastName" class="custom-input" placeholder="Nom...">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Téléphone :</label>
+              <input type="text" [(ngModel)]="editPhone" class="custom-input" placeholder="+223 70 00 00 00">
+            </div>
+
+            <div class="form-group">
+              <label>Rôle de l'employé :</label>
+              <select [(ngModel)]="editRole" class="custom-input">
+                <option value="SELLER">🛒 Vendeur (Caisse / Ventes)</option>
+                <option value="TECHNICIAN">🛠️ Technicien (Atelier SAV)</option>
+                <option value="REPAIRER">🛠️ Réparateur (Atelier SAV)</option>
+                <option value="MANAGER">📦 Gestionnaire de Boutique</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Boutique d'affectation :</label>
+              <select [(ngModel)]="editShopId" class="custom-input">
+                <option [ngValue]="null">Aucune (Toutes les boutiques)</option>
+                <option *ngFor="let s of shops" [value]="s.id">{{ s.name }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Réinitialiser le mot de passe (laisser vide si inchangé) :</label>
+              <input type="password" [(ngModel)]="editPassword" class="custom-input" placeholder="Nouveau mot de passe...">
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-secondary" (click)="closeEditUserModal()" [disabled]="submittingEditUser">Annuler</button>
+            <button class="btn-primary" (click)="submitEditUser()" [disabled]="submittingEditUser">
+              <span *ngIf="!submittingEditUser">Enregistrer les modifications ✨</span>
+              <span *ngIf="submittingEditUser">Enregistrement en cours... ⏳</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- SECTION 0 : CARTE DE STATISTIQUES FINANCIERES (KPIS) -->
       <div *ngIf="stats" class="kpi-grid">
         <div class="kpi-card total">
@@ -188,13 +249,20 @@
           <p>Créez un accès pour un employé et assignez-le à une boutique</p>
           
           <div class="form-vertical">
-            <input type="text" [(ngModel)]="newUsername" placeholder="Identifiant (ex: vendeur_moussa)...">
-            <input type="password" [(ngModel)]="newPassword" placeholder="Mot de passe...">
+            <div class="grid-inputs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+              <input type="text" [(ngModel)]="newFirstName" placeholder="Prénom (ex: Moussa)...">
+              <input type="text" [(ngModel)]="newLastName" placeholder="Nom (ex: Coulibaly)...">
+            </div>
+
+            <input type="text" [(ngModel)]="newPhone" placeholder="Téléphone (ex: +223 70 00 00 00)...">
+            <input type="text" [(ngModel)]="newUsername" placeholder="Identifiant de connexion (ex: moussa_vendeur)...">
+            <input type="password" [(ngModel)]="newPassword" placeholder="Mot de passe temporaire...">
             
             <label class="input-label">Rôle de l'employé :</label>
             <select [(ngModel)]="newRole">
               <option value="SELLER">🛒 Vendeur (Caisse / Ventes)</option>
               <option value="TECHNICIAN">🛠️ Technicien (Atelier SAV)</option>
+              <option value="REPAIRER">🛠️ Réparateur (Atelier SAV)</option>
               <option value="MANAGER">📦 Gestionnaire de Boutique</option>
             </select>
 
@@ -207,27 +275,55 @@
             <button (click)="createUser()">Créer le compte employé</button>
           </div>
 
-          <h4 class="margin-top">Annuaire des Employés ({{ users.length }})</h4>
+          <h4 class="margin-top">Annuaire des Employés ({{ employees.length }})</h4>
           <table class="data-table">
             <thead>
               <tr>
-                <th>Identifiant</th>
+                <th>Employé</th>
+                <th>Téléphone</th>
                 <th>Rôle</th>
-                <th>Boutique d'Affectation</th>
+                <th>Boutique</th>
+                <th>Statut</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let u of users">
-                <td><strong>{{ u.username }}</strong></td>
+              <tr *ngFor="let u of employees">
                 <td>
-                  <span class="role-badge" [class.technician]="u.role === 'TECHNICIAN'" [class.seller]="u.role === 'SELLER'" [class.owner]="u.role === 'COMPANY_OWNER'">
-                    {{ u.role === 'SELLER' ? '🛒 Vendeur' : (u.role === 'TECHNICIAN' ? '🛠️ Technicien' : (u.role === 'COMPANY_OWNER' ? '👑 Boss' : u.role)) }}
+                  <strong>{{ (u.firstName || u.lastName) ? ((u.firstName || '') + ' ' + (u.lastName || '')) : u.username }}</strong>
+                  <div *ngIf="u.firstName || u.lastName" style="font-size: 0.75rem; color: #94a3b8;">@{{ u.username }}</div>
+                </td>
+                <td>{{ u.phone || '-' }}</td>
+                <td>
+                  <span class="role-badge" [class.technician]="u.role === 'TECHNICIAN' || u.role === 'REPAIRER'" [class.seller]="u.role === 'SELLER'">
+                    {{ u.role === 'SELLER' ? '🛒 Vendeur' : ((u.role === 'TECHNICIAN' || u.role === 'REPAIRER') ? '🛠️ Technicien' : (u.role === 'MANAGER' ? '📦 Gérant' : u.role)) }}
                   </span>
                 </td>
-                <td>{{ getShopName(u.shopId) }}</td>
+                <td>{{ u.shopName || getShopName(u.shopId) }}</td>
+                <td>
+                  <span class="status-pill" [class.active]="u.isActive !== false && u.active !== false" [class.blocked]="u.isActive === false || u.active === false">
+                    {{ (u.isActive !== false && u.active !== false) ? '🟢 Actif' : '🔴 Inactif' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn-action-sm btn-action-edit" (click)="openEditUserModal(u)" title="Modifier les informations de l'employé">
+                      ✏️ Modifier
+                    </button>
+                    <button 
+                      class="btn-action-sm" 
+                      [class.btn-action-block]="u.isActive !== false && u.active !== false" 
+                      [class.btn-action-unblock]="u.isActive === false || u.active === false"
+                      (click)="toggleUserActive(u)" 
+                      [title]="(u.isActive !== false && u.active !== false) ? 'Suspendre / Bloquer l\'accès' : 'Débloquer et réactiver l\'accès'"
+                    >
+                      {{ (u.isActive !== false && u.active !== false) ? '🛑 Bloquer' : '✅ Débloquer' }}
+                    </button>
+                  </div>
+                </td>
               </tr>
-              <tr *ngIf="users.length === 0">
-                <td colspan="3" class="empty-state">Aucun employé créé pour le moment.</td>
+              <tr *ngIf="employees.length === 0">
+                <td colspan="6" class="empty-state">Aucun employé créé pour le moment.</td>
               </tr>
             </tbody>
           </table>
