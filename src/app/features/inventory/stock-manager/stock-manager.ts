@@ -63,6 +63,14 @@ export class StockManagerComponent implements OnInit {
     return this.authService.hasRepairs();
   }
 
+  getUserDisplayName(user?: any): string {
+    return this.authService.getUserDisplayName(user || this.currentUser);
+  }
+
+  getRoleLabel(role?: string): string {
+    return this.authService.getRoleLabel(role || this.currentUser?.role);
+  }
+
   ngOnInit(): void {
     this.currentUser = this.authService.getUser();
 

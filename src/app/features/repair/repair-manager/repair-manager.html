@@ -35,7 +35,10 @@
         </select>
       </div>
       <div class="user-info">
-        <span>👤 <strong>{{ currentUser?.username }}</strong> ({{ currentUser?.role }})</span>
+        <span class="user-pill">
+          👤 <strong>{{ getUserDisplayName() }}</strong>
+          <span class="user-role-tag" [ngClass]="'role-' + (currentUser?.role?.toLowerCase() || '')">{{ getRoleLabel() }}</span>
+        </span>
         <button class="btn-logout" (click)="logout()">Déconnexion 🚪</button>
       </div>
     </header>
@@ -62,14 +65,14 @@
             <div class="form-group">
               <label>Type d'opération :</label>
               <select [(ngModel)]="paymentMode" class="custom-input">
-                <option value="ADDITIONAL">➕ Versement supplémentaire (ex: 5 000 FCFA)</option>
-                <option value="SET_DEPOSIT">✏️ Définir nouvel acompte total (ex: 20 000 FCFA)</option>
+                <option value="ADDITIONAL">➕ Versement supplémentaire</option>
+                <option value="SET_DEPOSIT">✏️ Définir un nouvel acompte total</option>
               </select>
             </div>
 
             <div class="form-group">
               <label>{{ paymentMode === 'ADDITIONAL' ? 'Montant du versement (FCFA) :' : 'Nouveau montant total de l\'acompte (FCFA) :' }}</label>
-              <input type="number" [(ngModel)]="paymentInputValue" class="custom-input" placeholder="ex: 5000">
+              <input type="number" [(ngModel)]="paymentInputValue" class="custom-input" placeholder="Montant du versement (FCFA)...">
             </div>
           </div>
 
@@ -81,25 +84,25 @@
       </div>
 
       <div class="grid-2">
-        <!-- FORMULAIRE DE RECEPTION D'UN APPAREIL EN PANNE -->
+        <!-- FORMULAIRE DE RECEPTION D'UN APPAREIL / MATERIEL EN PANNE -->
         <div class="card">
-          <h3>📝 Nouveau Ticket de Réparation</h3>
-          <p>Enregistrez un appareil déposé par un client en panne</p>
+          <h3>📝 Nouveau Ticket de Réparation / SAV</h3>
+          <p>Enregistrez un équipement ou matériel déposé par un client</p>
 
           <div class="form-vertical">
-            <input type="text" [(ngModel)]="customerName" placeholder="Nom complet du client (ex: Mamadou Coulibaly)...">
-            <input type="text" [(ngModel)]="customerPhone" placeholder="Téléphone du client (ex: +223 70 00 00 00)...">
-            <input type="text" [(ngModel)]="deviceModel" placeholder="Appareil / Marque / Modèle (ex: iPhone 11 64GB, Samsung S21)...">
-            <textarea [(ngModel)]="issueDescription" placeholder="Description de la panne (ex: Écran cassé, problème de batterie)..." rows="3"></textarea>
+            <input type="text" [(ngModel)]="customerName" placeholder="Nom complet du client...">
+            <input type="text" [(ngModel)]="customerPhone" placeholder="Numéro de téléphone du client...">
+            <input type="text" [(ngModel)]="deviceModel" placeholder="Équipement / Modèle / Référence...">
+            <textarea [(ngModel)]="issueDescription" placeholder="Description de la panne ou de la réparation à effectuer..." rows="3"></textarea>
 
             <div class="grid-inputs">
               <div>
                 <label class="input-label">Coût Total Estimé (FCFA) :</label>
-                <input type="number" [(ngModel)]="estimatedPrice" placeholder="ex: 35000">
+                <input type="number" [(ngModel)]="estimatedPrice" placeholder="Coût estimé (FCFA)...">
               </div>
               <div>
                 <label class="input-label">Acompte Versé (FCFA) :</label>
-                <input type="number" [(ngModel)]="depositAmount" placeholder="ex: 15000">
+                <input type="number" [(ngModel)]="depositAmount" placeholder="Acompte versé (FCFA)...">
               </div>
             </div>
 

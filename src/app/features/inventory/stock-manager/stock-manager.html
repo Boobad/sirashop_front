@@ -35,7 +35,10 @@
         </select>
       </div>
       <div class="user-info">
-        <span>👤 <strong>{{ currentUser?.username }}</strong> ({{ currentUser?.role }})</span>
+        <span class="user-pill">
+          👤 <strong>{{ getUserDisplayName() }}</strong>
+          <span class="user-role-tag" [ngClass]="'role-' + (currentUser?.role?.toLowerCase() || '')">{{ getRoleLabel() }}</span>
+        </span>
         <button class="btn-logout" (click)="logout()">Déconnexion 🚪</button>
       </div>
     </header>
@@ -44,21 +47,21 @@
       <!-- SECTION 1 : CATALOGUE DES PRODUITS GLOBAL -->
       <div class="grid-2">
         <div class="card">
-          <h3>📱 Ajouter un produit au Catalogue</h3>
-          <p>Créez un article (téléphone, chargeur, écouteurs...) vendu par l'entreprise</p>
+          <h3>📦 Ajouter un article au Catalogue</h3>
+          <p>Créez une référence d'article vendue par votre établissement</p>
           
           <div class="form-vertical">
-            <input type="text" [(ngModel)]="newProductName" placeholder="Nom de l'article (ex: iPhone 13 128GB, Chargeur Type-C 20W)...">
-            <input type="number" [(ngModel)]="newPurchasePrice" placeholder="Prix d'Achat Fournisseur (FCFA)...">
-            <input type="number" [(ngModel)]="newSellingPrice" placeholder="Prix de Vente Client (FCFA)...">
+            <input type="text" [(ngModel)]="newProductName" placeholder="Désignation de l'article...">
+            <input type="number" [(ngModel)]="newPurchasePrice" placeholder="Prix d'achat fournisseur (FCFA)...">
+            <input type="number" [(ngModel)]="newSellingPrice" placeholder="Prix de vente client (FCFA)...">
             
-            <label class="input-label">Boutique de destination initiale :</label>
+            <label class="input-label">Boutique / Point de vente de destination :</label>
             <select [(ngModel)]="selectedShopId" (change)="onShopChange()">
               <option *ngFor="let s of shops" [value]="s.id">{{ s.name }}</option>
             </select>
 
             <label class="input-label">Quantité Achetée / En Stock Initial :</label>
-            <input type="number" [(ngModel)]="newInitialQuantity" placeholder="Quantité initiale (ex: 50)">
+            <input type="number" [(ngModel)]="newInitialQuantity" placeholder="Quantité initiale...">
 
             <button (click)="createProduct()">Enregistrer l'Article & Son Stock</button>
           </div>
@@ -110,10 +113,10 @@
             </select>
 
             <label class="input-label">Quantité Réelle en Stock :</label>
-            <input type="number" [(ngModel)]="stockQuantity" placeholder="Quantité (ex: 50)">
+            <input type="number" [(ngModel)]="stockQuantity" placeholder="Quantité en stock...">
 
             <label class="input-label">Seuil d'Alerte Stock Faible :</label>
-            <input type="number" [(ngModel)]="alertThreshold" placeholder="Seuil minimum (ex: 5)">
+            <input type="number" [(ngModel)]="alertThreshold" placeholder="Seuil minimum d'alerte...">
 
             <button (click)="updateStock()">Mettre à jour le Stock</button>
           </div>

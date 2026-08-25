@@ -81,6 +81,14 @@ export class SuperAdminComponent implements OnInit {
     this.loadAdmins();
   }
 
+  getUserDisplayName(user?: any): string {
+    return this.authService.getUserDisplayName(user || this.currentUser);
+  }
+
+  getRoleLabel(role?: string): string {
+    return this.authService.getRoleLabel(role || this.currentUser?.role);
+  }
+
   setTab(tab: 'companies' | 'stats' | 'payments' | 'admins'): void {
     this.activeTab = tab;
     if (tab === 'stats') this.loadStats();

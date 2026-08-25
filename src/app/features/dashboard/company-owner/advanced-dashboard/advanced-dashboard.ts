@@ -103,12 +103,30 @@ export class AdvancedDashboardComponent implements OnInit, AfterViewInit, OnDest
     this.destroyCharts();
   }
 
+  get selectedCompany(): Company | undefined {
+    return this.companies.find(c => c.id === this.selectedCompanyId);
+  }
+
   hasSales(): boolean {
+    if (this.selectedCompany && this.selectedCompany.hasSalesEnabled !== undefined) {
+      return this.selectedCompany.hasSalesEnabled !== false;
+    }
     return this.authService.hasSales();
   }
 
   hasRepairs(): boolean {
+    if (this.selectedCompany && this.selectedCompany.hasRepairsEnabled !== undefined) {
+      return this.selectedCompany.hasRepairsEnabled !== false;
+    }
     return this.authService.hasRepairs();
+  }
+
+  getUserDisplayName(user?: any): string {
+    return this.authService.getUserDisplayName(user || this.currentUser);
+  }
+
+  getRoleLabel(role?: string): string {
+    return this.authService.getRoleLabel(role || this.currentUser?.role);
   }
 
   onCompanyChange(): void {
@@ -217,45 +235,53 @@ export class AdvancedDashboardComponent implements OnInit, AfterViewInit, OnDest
       const salesRev = this.stats.dailyRevenue.map(d => d.salesRevenue);
       const repairRev = this.stats.dailyRevenue.map(d => d.repairRevenue);
 
+      const datasets: any[] = [
+        {
+          label: 'CA Total (FCFA)',
+          data: totalRev,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.15)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }
+      ];
+
+      if (this.hasSales()) {
+        datasets.push({
+          label: 'Ventes Articles (FCFA)',
+          data: salesRev,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.05)',
+          borderWidth: 2,
+          borderDash: [4, 4],
+          fill: false,
+          tension: 0.4
+        });
+      }
+
+      if (this.hasRepairs()) {
+        datasets.push({
+          label: 'Réparations SAV (FCFA)',
+          data: repairRev,
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139, 92, 246, 0.05)',
+          borderWidth: 2,
+          borderDash: [4, 4],
+          fill: false,
+          tension: 0.4
+        });
+      }
+
       const ctx = this.dailyRevenueCanvas.nativeElement.getContext('2d');
       if (ctx) {
         this.dailyChartInstance = new Chart(ctx, {
           type: 'line',
           data: {
             labels: dates,
-            datasets: [
-              {
-                label: 'CA Total (FCFA)',
-                data: totalRev,
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 4,
-                pointHoverRadius: 6
-              },
-              {
-                label: 'Ventes Articles (FCFA)',
-                data: salesRev,
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                borderWidth: 2,
-                borderDash: [4, 4],
-                fill: false,
-                tension: 0.4
-              },
-              {
-                label: 'Réparations SAV (FCFA)',
-                data: repairRev,
-                borderColor: '#8b5cf6',
-                backgroundColor: 'rgba(139, 92, 246, 0.05)',
-                borderWidth: 2,
-                borderDash: [4, 4],
-                fill: false,
-                tension: 0.4
-              }
-            ]
+            datasets: datasets
           },
           options: {
             responsive: true,
@@ -289,7 +315,7 @@ export class AdvancedDashboardComponent implements OnInit, AfterViewInit, OnDest
     }
 
     // 2. Top 5 Products Chart (Horizontal Bar Chart)
-    if (this.topProductsCanvas && this.stats.topProducts) {
+    if (this.hasSales() && this.topProductsCanvas && this.stats.topProducts) {
       const labels = this.stats.topProducts.map(p => p.productName);
       const quantities = this.stats.topProducts.map(p => p.totalQuantitySold);
 
@@ -348,7 +374,7 @@ export class AdvancedDashboardComponent implements OnInit, AfterViewInit, OnDest
     }
 
     // 3. Seller Performance Chart (Vertical Bar Chart)
-    if (this.sellerPerformanceCanvas && this.stats.sellerPerformance) {
+    if (this.hasSales() && this.sellerPerformanceCanvas && this.stats.sellerPerformance) {
       const sellers = this.stats.sellerPerformance.map(s => this.getSellerDisplayName(s));
       const revenues = this.stats.sellerPerformance.map(s => s.totalRevenue);
 

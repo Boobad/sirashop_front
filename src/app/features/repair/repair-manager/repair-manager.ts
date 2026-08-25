@@ -73,6 +73,14 @@ export class RepairManagerComponent implements OnInit {
     return this.authService.hasRepairs();
   }
 
+  getUserDisplayName(user?: any): string {
+    return this.authService.getUserDisplayName(user || this.currentUser);
+  }
+
+  getRoleLabel(role?: string): string {
+    return this.authService.getRoleLabel(role || this.currentUser?.role);
+  }
+
   ngOnInit(): void {
     this.currentUser = this.authService.getUser();
 
@@ -125,7 +133,7 @@ export class RepairManagerComponent implements OnInit {
       return;
     }
     if (!this.deviceModel.trim()) {
-      this.toastService.warning('Veuillez spécifier le modèle de l\'appareil (ex: iPhone 12, Samsung A52...).');
+      this.toastService.warning('Veuillez spécifier l\'équipement, le modèle ou la référence.');
       return;
     }
     if (!this.selectedShopId) {

@@ -547,3 +547,185 @@ select {
   padding: 2rem;
   color: var(--text-muted);
 }
+
+/* POS TABS & JOURNAL DES VENTES */
+.pos-tabs-header {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.pos-tab-btn {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-medium);
+  color: var(--text-secondary);
+  padding: 0.75rem 1.4rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pos-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.pos-tab-btn.active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.3));
+  border-color: var(--accent-blue);
+  color: #93c5fd;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.25);
+}
+
+/* KPI GRID SAAS */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.2rem;
+}
+
+.kpi-card {
+  background: var(--bg-surface);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 16px;
+  padding: 1.4rem;
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+}
+
+.kpi-card.gold-border { border-top: 4px solid var(--accent-amber); }
+.kpi-card.blue-border { border-top: 4px solid var(--accent-blue); }
+.kpi-card.green-border { border-top: 4px solid var(--accent-emerald); }
+
+.kpi-icon {
+  font-size: 2rem;
+  background: rgba(2, 6, 23, 0.6);
+  padding: 0.6rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-medium);
+}
+
+.kpi-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.kpi-number {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0.2rem 0;
+}
+
+.kpi-desc {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+/* FILTER HEADER & PERIOD BUTTONS */
+.sales-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.period-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  background: rgba(2, 6, 23, 0.5);
+  border: 1px solid var(--border-medium);
+  color: var(--text-secondary);
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+}
+
+.filter-btn.active {
+  background: var(--accent-blue);
+  color: white;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+
+/* SALES TABLE BADGES & BUTTONS */
+.seller-pill {
+  font-size: 0.82rem;
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.sale-items-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.item-tag {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  color: var(--text-secondary);
+}
+
+.payment-method-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+.btn-reprint {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reprint:hover {
+  background: rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
+}

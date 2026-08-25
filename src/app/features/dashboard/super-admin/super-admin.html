@@ -48,7 +48,10 @@
       </div>
 
       <div class="user-info">
-        <span>👤 <strong>{{ currentUser?.username }}</strong> ({{ currentUser?.role }})</span>
+        <span class="user-pill">
+          👤 <strong>{{ getUserDisplayName() }}</strong>
+          <span class="user-role-tag" [ngClass]="'role-' + (currentUser?.role?.toLowerCase() || '')">{{ getRoleLabel() }}</span>
+        </span>
         <button class="btn-logout" (click)="logout()">Déconnexion 🚪</button>
       </div>
     </header>
@@ -82,12 +85,12 @@
 
             <div class="form-group">
               <label>Montant Encaissé (FCFA) :</label>
-              <input type="number" [(ngModel)]="payAmount" class="custom-input" placeholder="30000">
+              <input type="number" [(ngModel)]="payAmount" class="custom-input" placeholder="Montant encaissé (FCFA)...">
             </div>
 
             <div class="form-group">
               <label>Référence / Note de versement :</label>
-              <input type="text" [(ngModel)]="payNotes" class="custom-input" placeholder="ex: Versement Orange Money / Wave / Espèces...">
+              <input type="text" [(ngModel)]="payNotes" class="custom-input" placeholder="Référence / Notes de versement...">
             </div>
           </div>
 
@@ -119,17 +122,17 @@
           <div class="modal-body">
             <div class="form-group">
               <label>Nom de l'Entreprise :</label>
-              <input type="text" [(ngModel)]="editCompanyName" class="custom-input" placeholder="ex: MDS, Boutique Sira...">
+              <input type="text" [(ngModel)]="editCompanyName" class="custom-input" placeholder="Nom de l'entreprise...">
             </div>
 
             <div class="form-group">
               <label>Nom & Prénom du Propriétaire (Boss) :</label>
-              <input type="text" [(ngModel)]="editOwnerName" class="custom-input" placeholder="ex: Mamadou Diarra">
+              <input type="text" [(ngModel)]="editOwnerName" class="custom-input" placeholder="Nom et prénom du gérant...">
             </div>
 
             <div class="form-group">
               <label>Téléphone / Contact :</label>
-              <input type="text" [(ngModel)]="editPhone" class="custom-input" placeholder="ex: +223 70 00 00 00">
+              <input type="text" [(ngModel)]="editPhone" class="custom-input" placeholder="Numéro de téléphone...">
             </div>
 
             <div class="form-group">
@@ -179,7 +182,7 @@
                 <input 
                   type="text" 
                   [(ngModel)]="newCompanyName" 
-                  placeholder="ex: MDS, Boutique Sira..."
+                  placeholder="Nom de l'entreprise..."
                   class="custom-input"
                 >
               </div>
@@ -189,7 +192,7 @@
                 <input 
                   type="text" 
                   [(ngModel)]="newOwnerName" 
-                  placeholder="ex: Mamadou Diarra..."
+                  placeholder="Nom et prénom du gérant..."
                   class="custom-input"
                 >
               </div>
@@ -199,7 +202,7 @@
                 <input 
                   type="text" 
                   [(ngModel)]="newPhone" 
-                  placeholder="ex: +223 70 00 00 00..."
+                  placeholder="Numéro de téléphone..."
                   class="custom-input"
                 >
               </div>
@@ -209,7 +212,7 @@
                 <input 
                   type="text" 
                   [(ngModel)]="newOwnerUsername" 
-                  placeholder="ex: mds_boss, mamadou..."
+                  placeholder="Identifiant de connexion..."
                   class="custom-input"
                 >
               </div>
@@ -219,7 +222,7 @@
                 <input 
                   type="text" 
                   [(ngModel)]="newOwnerPassword" 
-                  placeholder="ex: mds123..."
+                  placeholder="Mot de passe temporaire..."
                   class="custom-input"
                 >
               </div>
@@ -413,7 +416,7 @@
               <p>Donnez les droits Super Admin à un membre de l'équipe SiraShop</p>
               
               <div class="vertical-form">
-                <input type="text" [(ngModel)]="newAdminUsername" placeholder="Identifiant (ex: admin2)..." class="custom-input">
+                <input type="text" [(ngModel)]="newAdminUsername" placeholder="Identifiant administrateur..." class="custom-input">
                 <input type="password" [(ngModel)]="newAdminPassword" placeholder="Mot de passe..." class="custom-input">
                 <button class="btn-primary" (click)="createAdmin()">Créer le Super Admin</button>
               </div>

@@ -27,8 +27,11 @@
         </select>
       </div>
       <div class="user-info">
-        <span>👤 <strong>{{ currentUser?.username }}</strong> ({{ currentUser?.role }})</span>
-        <button class="btn-pwd" (click)="openPasswordModal()">🔒 Sécurité / Mot de passe</button>
+        <span class="user-pill">
+          👤 <strong>{{ getUserDisplayName() }}</strong>
+          <span class="user-role-tag" [ngClass]="'role-' + (currentUser?.role?.toLowerCase() || '')">{{ getRoleLabel() }}</span>
+        </span>
+        <button class="btn-pwd" (click)="openPasswordModal()">🔒 Mot de passe</button>
         <button class="btn-logout" (click)="logout()">Déconnexion 🚪</button>
       </div>
     </header>
@@ -89,7 +92,7 @@
 
             <div class="form-group">
               <label>Téléphone :</label>
-              <input type="text" [(ngModel)]="editPhone" class="custom-input" placeholder="+223 70 00 00 00">
+              <input type="text" [(ngModel)]="editPhone" class="custom-input" placeholder="Numéro de téléphone...">
             </div>
 
             <div class="form-group">
@@ -130,16 +133,18 @@
         <div class="kpi-card total">
           <div class="kpi-title">💰 Chiffre d'Affaires Total</div>
           <div class="kpi-value">{{ stats.totalRevenue | fcfa }}</div>
-          <div class="kpi-sub">Total Ventes + Réparations</div>
+          <div class="kpi-sub" *ngIf="hasSales() && hasRepairs()">Total Ventes + Réparations</div>
+          <div class="kpi-sub" *ngIf="!hasSales() && hasRepairs()">Total Réparations SAV ({{ stats.totalRepairsCount || 0 }} appareils)</div>
+          <div class="kpi-sub" *ngIf="hasSales() && !hasRepairs()">Total Ventes d'Articles ({{ stats.totalSalesCount || 0 }} transactions)</div>
         </div>
 
-        <div class="kpi-card sales">
+        <div class="kpi-card sales" *ngIf="hasSales()">
           <div class="kpi-title">🛒 Ventes d'Articles</div>
           <div class="kpi-value">{{ stats.salesRevenue | fcfa }}</div>
           <div class="kpi-sub">{{ stats.totalSalesCount || 0 }} transactions en caisse</div>
         </div>
 
-        <div class="kpi-card repairs">
+        <div class="kpi-card repairs" *ngIf="hasRepairs()">
           <div class="kpi-title">🛠️ Réparations SAV</div>
           <div class="kpi-value">{{ stats.repairRevenue | fcfa }}</div>
           <div class="kpi-sub">{{ stats.totalRepairsCount || 0 }} appareils réparés</div>
@@ -153,28 +158,28 @@
           <thead>
             <tr>
               <th>Boutique</th>
-              <th>CA Ventes</th>
-              <th>Nb Ventes</th>
-              <th>CA Réparations</th>
-              <th>Nb Réparations</th>
+              <th *ngIf="hasSales()">CA Ventes</th>
+              <th *ngIf="hasSales()">Nb Ventes</th>
+              <th *ngIf="hasRepairs()">CA Réparations</th>
+              <th *ngIf="hasRepairs()">Nb Réparations</th>
               <th>CA Total</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let s of stats.shopStats">
               <td><strong>{{ s.shopName }}</strong></td>
-              <td><span class="text-green">{{ s.salesRevenue | fcfa }}</span></td>
-              <td>{{ s.salesCount || 0 }}</td>
-              <td><span class="text-purple">{{ s.repairRevenue | fcfa }}</span></td>
-              <td>{{ s.repairsCount || 0 }}</td>
+              <td *ngIf="hasSales()"><span class="text-green">{{ s.salesRevenue | fcfa }}</span></td>
+              <td *ngIf="hasSales()">{{ s.salesCount || 0 }}</td>
+              <td *ngIf="hasRepairs()"><span class="text-purple">{{ s.repairRevenue | fcfa }}</span></td>
+              <td *ngIf="hasRepairs()">{{ s.repairsCount || 0 }}</td>
               <td><strong class="text-gold">{{ s.totalRevenue | fcfa }}</strong></td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <!-- SECTION 1 : JOURNAL ET AUDIT DES VENTES PAR VENDEUR / CAISSIER -->
-      <div class="card margin-top">
+      <!-- SECTION 1 : JOURNAL ET AUDIT DES VENTES (SI MODULE VENTES ACTIF) -->
+      <div *ngIf="hasSales()" class="card margin-top">
         <h3>🛒 Journal d'Audit des Ventes Réalisées par Vendeur ({{ sales.length }})</h3>
         <p>Affiche chaque transaction enregistrée en caisse avec le nom du caissier et la boutique</p>
 
@@ -209,19 +214,73 @@
         </table>
       </div>
 
+      <!-- SECTION 1.5 : JOURNAL DES REPARATIONS SAV (SI MODULE SAV ACTIF) -->
+      <div *ngIf="hasRepairs()" class="card margin-top">
+        <h3>🛠️ Journal des Réparations & Tickets SAV ({{ repairTickets.length }})</h3>
+        <p>Affiche tous les appareils déposés par les clients, leur état d'avancement, technicien et montants</p>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#Ticket</th>
+              <th>Boutique / Atelier</th>
+              <th>Client & Contact</th>
+              <th>Appareil & Panne</th>
+              <th>Technicien</th>
+              <th>Statut</th>
+              <th>Coût & Acompte</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of repairTickets">
+              <td><strong>#T-{{ t.id }}</strong></td>
+              <td><strong>{{ t.shopName || getShopName(t.shopId) }}</strong></td>
+              <td>
+                <strong>{{ t.customerName }}</strong>
+                <div style="font-size: 0.75rem; color: #94a3b8;">📞 {{ t.customerPhone }}</div>
+              </td>
+              <td>
+                <strong>{{ t.deviceModel }}</strong>
+                <div style="font-size: 0.75rem; color: #94a3b8;">{{ t.issueDescription }}</div>
+              </td>
+              <td>
+                <span *ngIf="t.technicianUsername" class="seller-badge">🛠️ {{ t.technicianUsername }}</span>
+                <span *ngIf="!t.technicianUsername" style="color: #94a3b8; font-style: italic;">Non assigné</span>
+              </td>
+              <td>
+                <span class="status-pill status-{{ t.status?.toLowerCase() }}">
+                  {{ getStatusLabel(t.status) }}
+                </span>
+              </td>
+              <td>
+                <div class="text-green"><strong>{{ t.estimatedPrice | fcfa }}</strong></div>
+                <div *ngIf="t.depositAmount" style="font-size: 0.72rem; color: #f59e0b;">
+                  Acompte: {{ t.depositAmount | fcfa }}
+                </div>
+              </td>
+              <td>{{ t.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            </tr>
+            <tr *ngIf="repairTickets.length === 0">
+              <td colspan="8" class="empty-state">Aucun ticket de réparation enregistré pour le moment.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <!-- SECTION 2 : GESTION DES BOUTIQUES & EMPLOYES -->
       <div class="grid-2 margin-top">
         <div class="card">
-          <h3>🏪 Ajouter une nouvelle boutique / point de vente</h3>
-          <p>Créez un magasin physique ou un atelier de réparation</p>
+          <h3>🏪 {{ hasSales() ? 'Ajouter une nouvelle boutique / point de vente' : 'Ajouter un nouvel atelier de réparation SAV' }}</h3>
+          <p>{{ hasSales() ? 'Créez un magasin physique ou un atelier de réparation' : 'Créez un atelier ou centre de réparation SAV' }}</p>
           
           <div class="form-vertical">
-            <input type="text" [(ngModel)]="newShopName" placeholder="Nom (ex: Boutique Centre-Ville, Atelier SAV)...">
-            <input type="text" [(ngModel)]="newShopAddress" placeholder="Adresse / Emplacement (ex: Grand Marché, Rue 12)...">
-            <button (click)="createShop()">Créer la boutique</button>
+            <input type="text" [(ngModel)]="newShopName" [placeholder]="!hasSales() ? 'Nom de l\'atelier...' : 'Nom de la boutique...'">
+            <input type="text" [(ngModel)]="newShopAddress" placeholder="Adresse / Emplacement...">
+            <button (click)="createShop()">{{ hasSales() ? 'Créer la boutique' : 'Créer l\'atelier SAV' }}</button>
           </div>
 
-          <h4 class="margin-top">Vos Boutiques ({{ shops.length }})</h4>
+          <h4 class="margin-top">Vos {{ hasSales() ? 'Boutiques' : 'Ateliers & Points SAV' }} ({{ shops.length }})</h4>
           <table class="data-table">
             <thead>
               <tr>
@@ -237,7 +296,7 @@
                 <td>{{ s.address || 'Non spécifiée' }}</td>
               </tr>
               <tr *ngIf="shops.length === 0">
-                <td colspan="3" class="empty-state">Aucune boutique créée pour l'instant.</td>
+                <td colspan="3" class="empty-state">Aucun point créé pour l'instant.</td>
               </tr>
             </tbody>
           </table>
@@ -249,12 +308,12 @@
           
           <div class="form-vertical">
             <div class="grid-inputs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
-              <input type="text" [(ngModel)]="newFirstName" placeholder="Prénom (ex: Moussa)...">
-              <input type="text" [(ngModel)]="newLastName" placeholder="Nom (ex: Coulibaly)...">
+              <input type="text" [(ngModel)]="newFirstName" placeholder="Prénom...">
+              <input type="text" [(ngModel)]="newLastName" placeholder="Nom...">
             </div>
 
-            <input type="text" [(ngModel)]="newPhone" placeholder="Téléphone (ex: +223 70 00 00 00)...">
-            <input type="text" [(ngModel)]="newUsername" placeholder="Identifiant de connexion (ex: moussa_vendeur)...">
+            <input type="text" [(ngModel)]="newPhone" placeholder="Numéro de téléphone...">
+            <input type="text" [(ngModel)]="newUsername" placeholder="Identifiant de connexion...">
             <input type="password" [(ngModel)]="newPassword" placeholder="Mot de passe temporaire...">
             
             <label class="input-label">Rôle de l'employé :</label>

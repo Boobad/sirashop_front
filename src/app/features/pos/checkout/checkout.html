@@ -36,11 +36,14 @@
 
         <label class="margin-left">Vendeur / Caissier : </label>
         <select [(ngModel)]="selectedSellerId" [disabled]="currentUser?.role === 'SELLER'">
-          <option *ngFor="let u of sellers" [value]="u.id">{{ u.username }} ({{ u.role }})</option>
+          <option *ngFor="let u of sellers" [value]="u.id">{{ getUserDisplayName(u) }} ({{ getRoleLabel(u.role) }})</option>
         </select>
       </div>
       <div class="user-info">
-        <span>👤 <strong>{{ currentUser?.username }}</strong> ({{ currentUser?.role }})</span>
+        <span class="user-pill">
+          👤 <strong>{{ getUserDisplayName() }}</strong>
+          <span class="user-role-tag" [ngClass]="'role-' + (currentUser?.role?.toLowerCase() || '')">{{ getRoleLabel() }}</span>
+        </span>
         <button class="btn-logout" (click)="logout()">Déconnexion 🚪</button>
       </div>
     </header>
@@ -111,7 +114,26 @@
         </div>
       </div>
 
-      <div class="grid-pos">
+      <!-- ONGLETS NAVIGATION CAISSE / HISTORIQUE & BILAN (Réservé au MANAGER / Gérant) -->
+      <div *ngIf="currentUser?.role === 'MANAGER' || currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'SUPER_ADMIN'" class="pos-tabs-header">
+        <button 
+          class="pos-tab-btn" 
+          [class.active]="posActiveTab === 'pos'" 
+          (click)="setPosTab('pos')"
+        >
+          🛒 Caisse & Encaissement
+        </button>
+        <button 
+          class="pos-tab-btn" 
+          [class.active]="posActiveTab === 'history'" 
+          (click)="setPosTab('history')"
+        >
+          📊 Bilan des Ventes de la Boutique ({{ shopSales.length }})
+        </button>
+      </div>
+
+      <!-- VUE 1 : CAISSE & ENCAISSEMENT -->
+      <div *ngIf="posActiveTab === 'pos'" class="grid-pos">
         <!-- BARRE DE RECHERCHE + PRODUITS EN CATALOGUE DE L'ENTREPRISE -->
         <div class="card">
           <div class="header-flex">
@@ -120,7 +142,7 @@
               <input 
                 type="text" 
                 [(ngModel)]="searchQuery" 
-                placeholder="🔍 Rechercher un produit (ex: Chargeur, iPhone)..."
+                placeholder="🔍 Rechercher un article ou une référence..."
                 class="search-input"
               >
             </div>
@@ -135,63 +157,65 @@
             >
               <div class="product-card-top">
                 <div class="product-title">{{ p.productName }}</div>
-                <div class="product-price">{{ p.sellingPrice | fcfa }}</div>
-                <div class="product-stock" [class.out-of-stock]="p.quantity <= 0">
-                  {{ p.quantity > 0 ? 'En stock : ' + p.quantity + ' unités' : '⚠️ Rupture de stock (0)' }}
-                </div>
+                <button 
+                  *ngIf="p.quantity <= 0" 
+                  class="btn-network-check" 
+                  (click)="openNetworkStockModal(p); $event.stopPropagation()"
+                  title="Vérifier le stock dans vos autres boutiques"
+                >
+                  🔎 Vérifier Réseau
+                </button>
               </div>
 
-              <div class="product-card-actions">
-                <button class="btn-network-check" (click)="openNetworkStockModal(p, $event)" title="Vérifier dans les autres boutiques de l'entreprise">
-                  🔍 Vérifier autre boutique
-                </button>
-                <div class="product-add">{{ p.quantity > 0 ? '+ Ajouter au panier' : '⚠️ Vérifier réseau' }}</div>
+              <div class="product-price">{{ p.sellingPrice | fcfa }}</div>
+              <div class="product-stock" [class.out-of-stock]="p.quantity <= 0">
+                {{ p.quantity > 0 ? (p.quantity + ' en stock') : 'Rupture de stock' }}
               </div>
             </div>
 
             <div *ngIf="displayProducts.length === 0" class="empty-state">
-              Aucun produit trouvé pour "{{ searchQuery }}".
+              Aucun produit disponible correspondant à la recherche.
             </div>
           </div>
         </div>
 
-        <!-- PANIER / CAISSE / DETAIL D'ACHAT -->
-        <div class="card checkout-card">
+        <!-- PANIER / TICKET EN COURS -->
+        <div class="card cart-card">
           <div class="header-flex">
-            <h3>🛒 Détails de la Vente</h3>
-            <button *ngIf="cart.length > 0" class="btn-clear-cart" (click)="clearCart()" title="Vider tous les articles du panier">
-              🗑️ Vider le panier
+            <h3>🛒 Ticket en Cours</h3>
+            <button *ngIf="cart.length > 0" class="btn-clear-cart" (click)="clearCart()">
+              Vider le panier 🗑️
             </button>
           </div>
-          
+
           <table class="cart-table">
             <thead>
               <tr>
                 <th>Article</th>
-                <th>Prix Unitaire</th>
-                <th>Quantité</th>
+                <th>Qté</th>
+                <th>Prix</th>
                 <th>Total</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let item of cart; let i = index">
-                <td><strong>{{ item.productName }}</strong></td>
+                <td>{{ item.productName }}</td>
                 <td>
-                  <input type="number" [(ngModel)]="item.unitPrice" (change)="updateItemPrice(item)" class="price-input"> FCFA
-                </td>
-                <td>
-                  <div class="qty-controls">
-                    <button class="btn-qty" (click)="decreaseQty(item, i)">-</button>
+                  <div class="qty-control">
+                    <button class="qty-btn" (click)="decreaseQty(item, i)">-</button>
                     <span class="qty-val">{{ item.quantity }}</span>
-                    <button class="btn-qty" (click)="increaseQty(item)">+</button>
+                    <button class="qty-btn" (click)="increaseQty(item)">+</button>
                   </div>
                 </td>
-                <td><strong class="item-total">{{ item.quantity * item.unitPrice | fcfa }}</strong></td>
-                <td><button class="btn-remove" (click)="removeFromCart(i)" title="Retirer l'article">✕</button></td>
+                <td>{{ item.unitPrice | fcfa }}</td>
+                <td><strong>{{ (item.quantity * item.unitPrice) | fcfa }}</strong></td>
+                <td>
+                  <button class="btn-remove" (click)="removeFromCart(i)">✕</button>
+                </td>
               </tr>
               <tr *ngIf="cart.length === 0">
-                <td colspan="5" class="empty-state">Votre panier est vide. Veuillez sélectionner des articles.</td>
+                <td colspan="5" class="empty-state">Le panier est vide. Cliquez sur un article du catalogue pour l'ajouter.</td>
               </tr>
             </tbody>
           </table>
@@ -217,7 +241,120 @@
               </button>
             </div>
           </div>
+        </div>
+      </div>
 
+      <!-- VUE 2 : BILAN & JOURNAL DES VENTES DE LA BOUTIQUE -->
+      <div *ngIf="posActiveTab === 'history'" class="sales-history-container">
+        <!-- CARTES KPIS DU BILAN -->
+        <div class="kpi-grid">
+          <div class="kpi-card gold-border">
+            <div class="kpi-icon">🟢</div>
+            <div class="kpi-details">
+              <span class="kpi-label">Ventes d'Aujourd'hui</span>
+              <div class="kpi-number text-gold">{{ todaySales.revenue | fcfa }}</div>
+              <span class="kpi-desc">{{ todaySales.count }} ticket(s) encaissé(s) aujourd'hui</span>
+            </div>
+          </div>
+
+          <div class="kpi-card blue-border">
+            <div class="kpi-icon">🟡</div>
+            <div class="kpi-details">
+              <span class="kpi-label">Ventes d'Hier</span>
+              <div class="kpi-number">{{ yesterdaySales.revenue | fcfa }}</div>
+              <span class="kpi-desc">{{ yesterdaySales.count }} ticket(s) encaissé(s) hier</span>
+            </div>
+          </div>
+
+          <div class="kpi-card green-border">
+            <div class="kpi-icon">🟣</div>
+            <div class="kpi-details">
+              <span class="kpi-label">Ventes du Mois en cours</span>
+              <div class="kpi-number text-emerald">{{ thisMonthSales.revenue | fcfa }}</div>
+              <span class="kpi-desc">{{ thisMonthSales.count }} ticket(s) encaissé(s) ce mois</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- FILTRES & TABLEAU DES VENTES -->
+        <div class="card margin-top">
+          <div class="sales-filter-header">
+            <div class="period-buttons">
+              <button class="filter-btn" [class.active]="salesPeriodFilter === 'ALL'" (click)="salesPeriodFilter = 'ALL'">
+                Toutes les ventes
+              </button>
+              <button class="filter-btn" [class.active]="salesPeriodFilter === 'TODAY'" (click)="salesPeriodFilter = 'TODAY'">
+                📅 Aujourd'hui
+              </button>
+              <button class="filter-btn" [class.active]="salesPeriodFilter === 'YESTERDAY'" (click)="salesPeriodFilter = 'YESTERDAY'">
+                ⏳ Hier
+              </button>
+              <button class="filter-btn" [class.active]="salesPeriodFilter === 'THIS_MONTH'" (click)="salesPeriodFilter = 'THIS_MONTH'">
+                🗓️ Ce mois-ci
+              </button>
+              <button class="filter-btn" [class.active]="salesPeriodFilter === 'LAST_MONTH'" (click)="salesPeriodFilter = 'LAST_MONTH'">
+                ⏮️ Mois dernier
+              </button>
+            </div>
+
+            <div class="search-box">
+              <input 
+                type="text" 
+                [(ngModel)]="salesSearchQuery" 
+                placeholder="🔍 Rechercher par ticket #, vendeur, article..." 
+                class="search-input"
+              >
+            </div>
+          </div>
+
+          <table class="data-table margin-top">
+            <thead>
+              <tr>
+                <th>Ticket #</th>
+                <th>Date & Heure</th>
+                <th>Vendeur</th>
+                <th>Articles Vendus</th>
+                <th>Mode Paiement</th>
+                <th>Total Encaissé</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let sale of filteredShopSales">
+                <td><strong>#{{ sale.id }}</strong></td>
+                <td>
+                  {{ sale.createdAt ? (sale.createdAt | date:'dd/MM/yyyy à HH:mm') : 'Date non dispo' }}
+                </td>
+                <td>
+                  <span class="seller-pill">👤 {{ sale.sellerUsername || 'Vendeur' }}</span>
+                </td>
+                <td>
+                  <div class="sale-items-summary">
+                    <span *ngFor="let it of sale.items" class="item-tag">
+                      {{ it.quantity }}x {{ it.productName || 'Article #' + it.productId }}
+                    </span>
+                    <span *ngIf="!sale.items || sale.items.length === 0" class="text-muted">Aucun détail</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="payment-method-tag">{{ getPaymentLabel(sale.paymentMethod || 'CASH') }}</span>
+                </td>
+                <td>
+                  <strong class="text-gold">{{ (sale.totalAmount || 0) | fcfa }}</strong>
+                </td>
+                <td style="text-align: right;">
+                  <button class="btn-reprint" (click)="reprintReceipt(sale)" title="Réimprimer le ticket de caisse">
+                    🖨️ Reçu
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="filteredShopSales.length === 0">
+                <td colspan="7" class="empty-state">
+                  {{ loadingSales ? 'Chargement des ventes en cours...' : 'Aucune vente enregistrée pour cette période.' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 

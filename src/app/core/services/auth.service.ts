@@ -8,6 +8,9 @@ export interface LoginResponse {
   token: string;
   id: number;
   username: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
   role: UserRole;
   companyId?: number;
   shopId?: number;
@@ -65,5 +68,45 @@ export class AuthService {
     if (!user) return false;
     if (user.role === 'SUPER_ADMIN') return true;
     return user.hasRepairsEnabled !== false;
+  }
+
+  getUserDisplayName(user?: any): string {
+    const target = user || this.getUser();
+    if (!target) return 'Utilisateur';
+
+    // 1. Si prénom et/ou nom sont renseignés
+    const first = (target.firstName || '').trim();
+    const last = (target.lastName || '').trim();
+    if (first || last) {
+      return `${first} ${last}`.trim();
+    }
+
+    // 2. Si le nom d'utilisateur est une adresse email (ex: Booba123@gmail.com)
+    if (target.username) {
+      if (target.username.includes('@')) {
+        const localPart = target.username.split('@')[0];
+        return localPart
+          .replace(/[._-]/g, ' ')
+          .split(' ')
+          .filter(Boolean)
+          .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ');
+      }
+      return target.username;
+    }
+
+    return 'Utilisateur';
+  }
+
+  getRoleLabel(role?: string): string {
+    switch (role) {
+      case 'SUPER_ADMIN': return 'Super Administrateur';
+      case 'COMPANY_OWNER': return 'Propriétaire';
+      case 'MANAGER': return 'Gérant de Boutique';
+      case 'SELLER': return 'Vendeur';
+      case 'TECHNICIAN': return 'Technicien SAV';
+      case 'REPAIRER': return 'Réparateur SAV';
+      default: return role || 'Employé';
+    }
   }
 }

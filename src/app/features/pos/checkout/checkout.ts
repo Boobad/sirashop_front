@@ -18,7 +18,7 @@ import { Shop } from '../../../core/services/shop.model';
 import { User } from '../../../core/services/user.model';
 import { Inventory } from '../../../core/services/inventory.model';
 import { Product } from '../../../core/services/product.model';
-import { SaleItem } from '../../../core/services/sale.model';
+import { Sale, SaleItem } from '../../../core/services/sale.model';
 
 export interface DisplayProductItem {
   productId: number;
@@ -61,6 +61,13 @@ export class CheckoutComponent implements OnInit {
   networkInventories: Inventory[] = [];
   loadingNetwork: boolean = false;
 
+  // Onglets Caisse & Journal des Ventes
+  posActiveTab: 'pos' | 'history' = 'pos';
+  shopSales: Sale[] = [];
+  loadingSales: boolean = false;
+  salesPeriodFilter: 'ALL' | 'TODAY' | 'YESTERDAY' | 'THIS_MONTH' | 'LAST_MONTH' = 'ALL';
+  salesSearchQuery: string = '';
+
   constructor(
     private companyService: CompanyService,
     private shopService: ShopService,
@@ -81,6 +88,14 @@ export class CheckoutComponent implements OnInit {
 
   hasRepairs(): boolean {
     return this.authService.hasRepairs();
+  }
+
+  getUserDisplayName(user?: any): string {
+    return this.authService.getUserDisplayName(user || this.currentUser);
+  }
+
+  getRoleLabel(role?: string): string {
+    return this.authService.getRoleLabel(role || this.currentUser?.role);
   }
 
   ngOnInit(): void {
@@ -163,6 +178,157 @@ export class CheckoutComponent implements OnInit {
     });
 
     this.cart = [];
+    this.loadShopSales();
+  }
+
+  loadShopSales(): void {
+    if (this.selectedShopId) {
+      this.loadingSales = true;
+      this.saleService.getSalesByShop(this.selectedShopId).subscribe({
+        next: (data) => {
+          this.shopSales = (data || []).sort((a, b) => {
+            const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return db - da;
+          });
+          this.loadingSales = false;
+        },
+        error: (err) => {
+          this.loadingSales = false;
+        }
+      });
+    } else if (this.selectedCompanyId && this.currentUser?.role === 'COMPANY_OWNER') {
+      this.loadingSales = true;
+      this.saleService.getSalesByCompany(this.selectedCompanyId).subscribe({
+        next: (data) => {
+          this.shopSales = (data || []).sort((a, b) => {
+            const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return db - da;
+          });
+          this.loadingSales = false;
+        },
+        error: (err) => {
+          this.loadingSales = false;
+        }
+      });
+    }
+  }
+
+  setPosTab(tab: 'pos' | 'history'): void {
+    this.posActiveTab = tab;
+    if (tab === 'history') {
+      this.loadShopSales();
+    }
+  }
+
+  private isSameDay(d1: Date, d2: Date): boolean {
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth() &&
+           d1.getDate() === d2.getDate();
+  }
+
+  private isSameMonth(d1: Date, d2: Date): boolean {
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth();
+  }
+
+  get todaySales(): { count: number; revenue: number } {
+    const now = new Date();
+    const list = this.shopSales.filter(s => s.createdAt && this.isSameDay(new Date(s.createdAt), now));
+    const revenue = list.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+    return { count: list.length, revenue };
+  }
+
+  get yesterdaySales(): { count: number; revenue: number } {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const list = this.shopSales.filter(s => s.createdAt && this.isSameDay(new Date(s.createdAt), yesterday));
+    const revenue = list.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+    return { count: list.length, revenue };
+  }
+
+  get thisMonthSales(): { count: number; revenue: number } {
+    const now = new Date();
+    const list = this.shopSales.filter(s => s.createdAt && this.isSameMonth(new Date(s.createdAt), now));
+    const revenue = list.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+    return { count: list.length, revenue };
+  }
+
+  get lastMonthSales(): { count: number; revenue: number } {
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+    const list = this.shopSales.filter(s => s.createdAt && this.isSameMonth(new Date(s.createdAt), lastMonth));
+    const revenue = list.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+    return { count: list.length, revenue };
+  }
+
+  get filteredShopSales(): Sale[] {
+    const now = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+    let list = this.shopSales;
+
+    switch (this.salesPeriodFilter) {
+      case 'TODAY':
+        list = list.filter(s => s.createdAt && this.isSameDay(new Date(s.createdAt), now));
+        break;
+      case 'YESTERDAY':
+        list = list.filter(s => s.createdAt && this.isSameDay(new Date(s.createdAt), yesterday));
+        break;
+      case 'THIS_MONTH':
+        list = list.filter(s => s.createdAt && this.isSameMonth(new Date(s.createdAt), now));
+        break;
+      case 'LAST_MONTH':
+        list = list.filter(s => s.createdAt && this.isSameMonth(new Date(s.createdAt), lastMonth));
+        break;
+    }
+
+    if (this.salesSearchQuery.trim()) {
+      const q = this.salesSearchQuery.toLowerCase().trim();
+      list = list.filter(s => 
+        (s.id && s.id.toString().includes(q)) ||
+        (s.sellerUsername && s.sellerUsername.toLowerCase().includes(q)) ||
+        (s.paymentMethod && s.paymentMethod.toLowerCase().includes(q)) ||
+        (s.items && s.items.some((it: SaleItem) => it.productName && it.productName.toLowerCase().includes(q)))
+      );
+    }
+
+    return list;
+  }
+
+  reprintReceipt(sale: Sale): void {
+    const currentShop = this.shops.find(s => s.id === (sale.shopId || this.selectedShopId));
+    const currentCompany = this.companies.find(c => c.id === this.selectedCompanyId);
+    const companyNameResolved = currentCompany?.name
+      || this.currentUser?.companyName
+      || (this.companies.length > 0 ? this.companies[0].name : '')
+      || 'Entreprise';
+
+    const receiptItems = (sale.items || []).map((item: SaleItem) => ({
+      productName: item.productName || `Article #${item.productId}`,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      totalPrice: (item.totalPrice || (item.quantity * item.unitPrice))
+    }));
+
+    const receiptData: ReceiptData = {
+      saleId: sale.id,
+      ticketNumber: `TICK-${sale.id}`,
+      date: sale.createdAt ? new Date(sale.createdAt) : new Date(),
+      companyName: companyNameResolved,
+      shopName: sale.shopName || currentShop?.name || 'Boutique',
+      shopAddress: currentShop?.address || '',
+      sellerName: sale.sellerUsername || 'Vendeur Caisse',
+      items: receiptItems,
+      totalAmount: sale.totalAmount || 0,
+      paymentMethod: this.getPaymentLabel(sale.paymentMethod || 'CASH')
+    };
+
+    this.receiptService.openReceipt(receiptData);
   }
 
   // Liste complète de TOUS les produits du catalogue avec leur stock dans la boutique sélectionnée
@@ -366,7 +532,7 @@ export class CheckoutComponent implements OnInit {
     });
   }
 
-  private getPaymentLabel(method: string): string {
+  getPaymentLabel(method: string): string {
     switch (method) {
       case 'CASH': return '💵 Espèces';
       case 'ORANGE_MONEY': return '🍊 Orange Money';

@@ -29,8 +29,11 @@
         </select>
       </div>
       <div class="user-info">
-        <span>👤 <strong>{{ currentUser?.username }}</strong> ({{ currentUser?.role }})</span>
-        <button class="btn-pwd" (click)="openPasswordModal()">🔒 Sécurité / Mot de passe</button>
+        <span class="user-pill">
+          👤 <strong>{{ getUserDisplayName() }}</strong>
+          <span class="user-role-tag" [ngClass]="'role-' + (currentUser?.role?.toLowerCase() || '')">{{ getRoleLabel() }}</span>
+        </span>
+        <button class="btn-pwd" (click)="openPasswordModal()">🔒 Mot de passe</button>
         <button class="btn-logout" (click)="logout()">Déconnexion 🚪</button>
       </div>
     </header>
@@ -108,18 +111,20 @@
           <div class="kpi-card total">
             <div class="kpi-title">💰 Chiffre d'Affaires Global</div>
             <div class="kpi-value">{{ stats.totalRevenue | fcfa }}</div>
-            <div class="kpi-sub">Ventes ({{ stats.totalSalesCount || 0 }}) + Réparations ({{ stats.totalRepairsCount || 0 }})</div>
+            <div class="kpi-sub" *ngIf="hasSales() && hasRepairs()">Ventes ({{ stats.totalSalesCount || 0 }}) + Réparations ({{ stats.totalRepairsCount || 0 }})</div>
+            <div class="kpi-sub" *ngIf="!hasSales() && hasRepairs()">Total Réparations ({{ stats.totalRepairsCount || 0 }} appareils réparés)</div>
+            <div class="kpi-sub" *ngIf="hasSales() && !hasRepairs()">Total Ventes ({{ stats.totalSalesCount || 0 }} transactions au total)</div>
           </div>
 
-          <!-- Carte 3: Ventes d'Articles -->
-          <div class="kpi-card sales">
+          <!-- Carte 3: Ventes d'Articles (si module Ventes actif) -->
+          <div class="kpi-card sales" *ngIf="hasSales()">
             <div class="kpi-title">🛒 CA Ventes Articles</div>
             <div class="kpi-value text-green">{{ stats.salesRevenue | fcfa }}</div>
             <div class="kpi-sub">{{ stats.totalSalesCount || 0 }} transactions au total</div>
           </div>
 
-          <!-- Carte 4: Réparations SAV -->
-          <div class="kpi-card repairs">
+          <!-- Carte 4: Réparations SAV (si module SAV actif) -->
+          <div class="kpi-card repairs" *ngIf="hasRepairs()">
             <div class="kpi-title">🛠️ CA Réparations SAV</div>
             <div class="kpi-value text-purple">{{ stats.repairRevenue | fcfa }}</div>
             <div class="kpi-sub">{{ stats.totalRepairsCount || 0 }} appareils réparés</div>
@@ -133,7 +138,9 @@
             <div class="card-header-flex">
               <div>
                 <h3>📅 Chiffre d'Affaires sur les 30 Derniers Jours</h3>
-                <p>Évolution quotidienne ventilée entre Ventes en boutique et Atelier Réparation SAV</p>
+                <p *ngIf="hasSales() && hasRepairs()">Évolution quotidienne ventilée entre Ventes en boutique et Atelier Réparation SAV</p>
+                <p *ngIf="!hasSales() && hasRepairs()">Évolution quotidienne du Chiffre d'Affaires de l'Atelier Réparation SAV</p>
+                <p *ngIf="hasSales() && !hasRepairs()">Évolution quotidienne du Chiffre d'Affaires des Ventes d'Articles</p>
               </div>
             </div>
             <div class="chart-container">
@@ -165,8 +172,8 @@
           </div>
         </div>
 
-        <!-- SECTION 3 : TOP PRODUITS & CLASSEMENT VENDEURS -->
-        <div class="grid-2 margin-top">
+        <!-- SECTION 3 : TOP PRODUITS & CLASSEMENT VENDEURS (UNIQUEMENT SI MODULE VENTES ACTIF) -->
+        <div *ngIf="hasSales()" class="grid-2 margin-top">
           <!-- Graphique 3 : Top 5 Produits vendus -->
           <div class="card chart-card">
             <div class="card-header-flex">
@@ -242,31 +249,31 @@
         <div *ngIf="stats.shopStats && stats.shopStats.length > 0" class="card margin-top">
           <div class="card-header-flex">
             <div>
-              <h3>🏪 Comparatif des Performances par Boutique</h3>
+              <h3>🏪 Comparatif des Performances par {{ hasSales() ? 'Boutique' : 'Atelier SAV' }}</h3>
               <p>Ventilation détaillée du chiffre d'affaires et de l'activité entre vos points de vente</p>
             </div>
           </div>
           <table class="data-table">
             <thead>
               <tr>
-                <th>Boutique</th>
-                <th>CA Ventes Articles</th>
-                <th>Nb Ventes</th>
-                <th>CA Réparations SAV</th>
-                <th>Nb Réparations</th>
+                <th>{{ hasSales() ? 'Boutique' : 'Atelier SAV' }}</th>
+                <th *ngIf="hasSales()">CA Ventes Articles</th>
+                <th *ngIf="hasSales()">Nb Ventes</th>
+                <th *ngIf="hasRepairs()">CA Réparations SAV</th>
+                <th *ngIf="hasRepairs()">Nb Réparations</th>
                 <th>CA Total Cumulé</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let s of stats.shopStats">
                 <td>
-                  <span class="shop-icon">🏬</span>
+                  <span class="shop-icon">{{ hasSales() ? '🏬' : '🛠️' }}</span>
                   <strong> {{ s.shopName }}</strong>
                 </td>
-                <td><span class="text-green">{{ s.salesRevenue | fcfa }}</span></td>
-                <td>{{ s.salesCount || 0 }}</td>
-                <td><span class="text-purple">{{ s.repairRevenue | fcfa }}</span></td>
-                <td>{{ s.repairsCount || 0 }}</td>
+                <td *ngIf="hasSales()"><span class="text-green">{{ s.salesRevenue | fcfa }}</span></td>
+                <td *ngIf="hasSales()">{{ s.salesCount || 0 }}</td>
+                <td *ngIf="hasRepairs()"><span class="text-purple">{{ s.repairRevenue | fcfa }}</span></td>
+                <td *ngIf="hasRepairs()">{{ s.repairsCount || 0 }}</td>
                 <td><strong class="text-gold">{{ s.totalRevenue | fcfa }}</strong></td>
               </tr>
             </tbody>

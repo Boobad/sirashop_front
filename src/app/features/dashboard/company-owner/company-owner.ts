@@ -8,6 +8,7 @@ import { ShopService } from '../../../core/services/shop.service';
 import { UserService } from '../../../core/services/user.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { SaleService } from '../../../core/services/sale.service';
+import { RepairService } from '../../../core/services/repair.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
@@ -16,6 +17,7 @@ import { Shop } from '../../../core/services/shop.model';
 import { User, UserRole } from '../../../core/services/user.model';
 import { Stats } from '../../../core/services/stats.model';
 import { Sale } from '../../../core/services/sale.model';
+import { RepairTicket } from '../../../core/services/repair.model';
 
 @Component({
   selector: 'app-company-owner',
@@ -31,6 +33,7 @@ export class CompanyOwnerComponent implements OnInit {
   shops: Shop[] = [];
   users: User[] = [];
   sales: Sale[] = [];
+  repairTickets: RepairTicket[] = [];
 
   stats: Stats | null = null;
   currentUser: any = null;
@@ -73,6 +76,7 @@ export class CompanyOwnerComponent implements OnInit {
     private userService: UserService,
     private dashboardService: DashboardService,
     private saleService: SaleService,
+    private repairService: RepairService,
     private authService: AuthService,
     private toastService: ToastService,
     private confirmDialogService: ConfirmDialogService,
@@ -105,6 +109,13 @@ export class CompanyOwnerComponent implements OnInit {
   onCompanyChange(): void {
     if (!this.selectedCompanyId) return;
 
+    // Réinitialiser le rôle sélectionné par défaut selon les modules disponibles
+    if (!this.hasSales() && this.hasRepairs()) {
+      this.newRole = 'TECHNICIAN';
+    } else {
+      this.newRole = 'SELLER';
+    }
+
     this.shopService.getShopsByCompany(this.selectedCompanyId).subscribe({
       next: (data) => {
         this.shops = data;
@@ -123,14 +134,31 @@ export class CompanyOwnerComponent implements OnInit {
       }
     });
 
-    this.saleService.getSalesByCompany(this.selectedCompanyId).subscribe({
-      next: (data) => {
-        this.sales = data;
-      },
-      error: (err) => {
-        this.toastService.error(err, { title: 'Erreur ventes' });
-      }
-    });
+    if (this.hasSales()) {
+      this.saleService.getSalesByCompany(this.selectedCompanyId).subscribe({
+        next: (data) => {
+          this.sales = data;
+        },
+        error: (err) => {
+          this.toastService.error(err, { title: 'Erreur ventes' });
+        }
+      });
+    } else {
+      this.sales = [];
+    }
+
+    if (this.hasRepairs()) {
+      this.repairService.getTicketsByCompany(this.selectedCompanyId).subscribe({
+        next: (data) => {
+          this.repairTickets = data;
+        },
+        error: (err) => {
+          this.toastService.error(err, { title: 'Erreur réparations SAV' });
+        }
+      });
+    } else {
+      this.repairTickets = [];
+    }
 
     this.dashboardService.getCompanyStats(this.selectedCompanyId).subscribe({
       next: (data) => {
@@ -164,10 +192,30 @@ export class CompanyOwnerComponent implements OnInit {
     return this.authService.hasRepairs();
   }
 
+  getUserDisplayName(user?: any): string {
+    return this.authService.getUserDisplayName(user || this.currentUser);
+  }
+
+  getRoleLabel(role?: string): string {
+    return this.authService.getRoleLabel(role || this.currentUser?.role);
+  }
+
   getShopName(shopId?: number): string {
     if (!shopId) return 'Toutes les boutiques';
     const shop = this.shops.find(s => s.id === shopId);
     return shop ? shop.name : `Boutique #${shopId}`;
+  }
+
+  getStatusLabel(status?: string): string {
+    switch (status) {
+      case 'RECEIVED': return '📥 Reçu';
+      case 'DIAGNOSING': return '🔍 Diagnostiqué';
+      case 'IN_PROGRESS': return '⚡ En cours';
+      case 'REPAIRED': return '✅ Réparé';
+      case 'DELIVERED': return '🎉 Livré';
+      case 'CANCELLED': return '❌ Annulé';
+      default: return status || 'Inconnu';
+    }
   }
 
   openPasswordModal(): void {

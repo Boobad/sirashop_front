@@ -323,6 +323,48 @@ header {
   font-size: 0.88rem !important;
 }
 
+.user-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  color: var(--text-main) !important;
+}
+
+.user-role-tag {
+  display: inline-block !important;
+  padding: 0.15rem 0.6rem !important;
+  border-radius: 20px !important;
+  font-size: 0.76rem !important;
+  font-weight: 700 !important;
+  background: rgba(59, 130, 246, 0.15) !important;
+  color: #60a5fa !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+}
+
+.user-role-tag.role-seller {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.user-role-tag.role-technician, .user-role-tag.role-repairer {
+  background: rgba(139, 92, 246, 0.15) !important;
+  color: #c084fc !important;
+  border: 1px solid rgba(139, 92, 246, 0.3) !important;
+}
+
+.user-role-tag.role-company_owner {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+.user-role-tag.role-super_admin {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.2)) !important;
+  color: #f472b6 !important;
+  border: 1px solid rgba(236, 72, 153, 0.3) !important;
+}
+
 .btn-logout {
   background-color: rgba(239, 68, 68, 0.15) !important;
   color: var(--accent-rose) !important;
