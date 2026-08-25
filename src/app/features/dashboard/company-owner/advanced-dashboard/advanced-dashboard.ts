@@ -103,6 +103,14 @@ export class AdvancedDashboardComponent implements OnInit, AfterViewInit, OnDest
     this.destroyCharts();
   }
 
+  hasSales(): boolean {
+    return this.authService.hasSales();
+  }
+
+  hasRepairs(): boolean {
+    return this.authService.hasRepairs();
+  }
+
   onCompanyChange(): void {
     if (this.selectedCompanyId) {
       this.loadAdvancedStats();

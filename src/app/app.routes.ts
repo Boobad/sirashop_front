@@ -33,19 +33,25 @@ export const routes: Routes = [
     path: 'stock', 
     component: StockManagerComponent,
     canActivate: [authGuard],
-    data: { roles: ['SUPER_ADMIN', 'COMPANY_OWNER', 'MANAGER'] }
+    data: { roles: ['SUPER_ADMIN', 'COMPANY_OWNER', 'MANAGER'], module: 'SALES' }
   },
   { 
     path: 'pos', 
     component: CheckoutComponent,
     canActivate: [authGuard],
-    data: { roles: ['SUPER_ADMIN', 'COMPANY_OWNER', 'MANAGER', 'SELLER'] }
+    data: { roles: ['SUPER_ADMIN', 'COMPANY_OWNER', 'MANAGER', 'SELLER'], module: 'SALES' }
   },
   { 
     path: 'repair', 
     component: RepairManagerComponent,
     canActivate: [authGuard],
-    data: { roles: ['SUPER_ADMIN', 'COMPANY_OWNER', 'TECHNICIAN'] }
+    data: { roles: ['SUPER_ADMIN', 'COMPANY_OWNER', 'TECHNICIAN', 'REPAIRER'], module: 'REPAIRS' }
+  },
+  { 
+    path: 'repairs', 
+    component: RepairManagerComponent,
+    canActivate: [authGuard],
+    data: { roles: ['SUPER_ADMIN', 'COMPANY_OWNER', 'TECHNICIAN', 'REPAIRER'], module: 'REPAIRS' }
   },
 
   { path: '', redirectTo: '/login', pathMatch: 'full' },

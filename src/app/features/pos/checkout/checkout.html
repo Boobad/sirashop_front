@@ -15,11 +15,11 @@
         <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'SUPER_ADMIN'">
           <a routerLink="/advanced-dashboard">📊 Tableau de Bord</a>
         </li>
-        <li *ngIf="currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'MANAGER' || currentUser?.role === 'SUPER_ADMIN'">
+        <li *ngIf="hasSales() && (currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'MANAGER' || currentUser?.role === 'SUPER_ADMIN')">
           <a routerLink="/stock">📦 Produits & Stock</a>
         </li>
-        <li class="active"><a routerLink="/pos">🛒 Caisse & Ventes</a></li>
-        <li *ngIf="currentUser?.role === 'TECHNICIAN' || currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'SUPER_ADMIN'">
+        <li class="active" *ngIf="hasSales()"><a routerLink="/pos">🛒 Caisse & Ventes</a></li>
+        <li *ngIf="hasRepairs() && (currentUser?.role === 'TECHNICIAN' || currentUser?.role === 'REPAIRER' || currentUser?.role === 'COMPANY_OWNER' || currentUser?.role === 'SUPER_ADMIN')">
           <a routerLink="/repair">🛠️ Réparations & SAV</a>
         </li>
       </ul>

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
-export type UserRole = 'SUPER_ADMIN' | 'COMPANY_OWNER' | 'MANAGER' | 'SELLER' | 'TECHNICIAN';
+export type UserRole = 'SUPER_ADMIN' | 'COMPANY_OWNER' | 'MANAGER' | 'SELLER' | 'TECHNICIAN' | 'REPAIRER';
 
 export interface LoginResponse {
   token: string;
@@ -11,6 +11,10 @@ export interface LoginResponse {
   role: UserRole;
   companyId?: number;
   shopId?: number;
+  shopName?: string;
+  companyName?: string;
+  hasSalesEnabled?: boolean;
+  hasRepairsEnabled?: boolean;
 }
 
 @Injectable({
@@ -47,5 +51,19 @@ export class AuthService {
     const user = this.getUser();
     if (!user) return false;
     return allowedRoles.includes(user.role);
+  }
+
+  hasSales(): boolean {
+    const user = this.getUser();
+    if (!user) return false;
+    if (user.role === 'SUPER_ADMIN') return true;
+    return user.hasSalesEnabled !== false;
+  }
+
+  hasRepairs(): boolean {
+    const user = this.getUser();
+    if (!user) return false;
+    if (user.role === 'SUPER_ADMIN') return true;
+    return user.hasRepairsEnabled !== false;
   }
 }

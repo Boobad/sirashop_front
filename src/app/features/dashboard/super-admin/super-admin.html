@@ -101,6 +101,69 @@
         </div>
       </div>
 
+      <!-- MODAL MODIFICATION ENTREPRISE -->
+      <div *ngIf="showEditCompanyModal" class="modal-backdrop" (click)="closeEditCompanyModal()">
+        <div class="modal-box" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>✏️ Modifier les Paramètres de l'Entreprise</h3>
+            <p>Entreprise : <strong>{{ editingCompany?.name }}</strong></p>
+          </div>
+
+          <div *ngIf="editCompanyError" class="modal-error-banner">
+            <span class="error-icon">⚠️</span>
+            <div class="error-text">
+              <p>{{ editCompanyError }}</p>
+            </div>
+          </div>
+
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Nom de l'Entreprise :</label>
+              <input type="text" [(ngModel)]="editCompanyName" class="custom-input" placeholder="ex: MDS, Boutique Sira...">
+            </div>
+
+            <div class="form-group">
+              <label>Nom & Prénom du Propriétaire (Boss) :</label>
+              <input type="text" [(ngModel)]="editOwnerName" class="custom-input" placeholder="ex: Mamadou Diarra">
+            </div>
+
+            <div class="form-group">
+              <label>Téléphone / Contact :</label>
+              <input type="text" [(ngModel)]="editPhone" class="custom-input" placeholder="ex: +223 70 00 00 00">
+            </div>
+
+            <div class="form-group">
+              <label class="modules-section-title">Modules & Fonctionnalités Activés :</label>
+              <div class="module-switches">
+                <label class="module-checkbox-label">
+                  <input type="checkbox" [(ngModel)]="editHasSales">
+                  <div class="module-info">
+                    <strong>🛒 Module Vente & Caisse</strong>
+                    <small>Encaissement, catalogue de produits, gestion des stocks</small>
+                  </div>
+                </label>
+
+                <label class="module-checkbox-label">
+                  <input type="checkbox" [(ngModel)]="editHasRepairs">
+                  <div class="module-info">
+                    <strong>🛠️ Module SAV & Réparations</strong>
+                    <small>Dépôt d'appareils, devis, suivi atelier et acomptes</small>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-secondary" (click)="closeEditCompanyModal()" [disabled]="submittingEditCompany">Annuler</button>
+            <button class="btn-emerald" (click)="submitEditCompany()" [disabled]="submittingEditCompany">
+              <span *ngIf="!submittingEditCompany">Enregistrer les modifications ✨</span>
+              <span *ngIf="submittingEditCompany">Enregistrement en cours... ⏳</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- ONGLET 1 : ENTREPRISES & ABONNEMENTS -->
       <div *ngIf="activeTab === 'companies'">
         <!-- CARTE D'INSCRIPTION SIMULTANEE (ENTREPRISE + PROPRIETAIRE) -->
@@ -108,7 +171,7 @@
           <div class="card-icon">➕</div>
           <div class="card-body">
             <h3>Inscrire une nouvelle Entreprise Cliente & Son Compte Propriétaire</h3>
-            <p>Créez l'entreprise et générez directement l'identifiant et mot de passe par défaut du Boss</p>
+            <p>Configurez l'entreprise, ses modules actifs (Ventes, SAV) et générez les accès du Boss</p>
 
             <div class="grid-inputs-3 margin-top">
               <div class="form-group">
@@ -117,6 +180,26 @@
                   type="text" 
                   [(ngModel)]="newCompanyName" 
                   placeholder="ex: MDS, Boutique Sira..."
+                  class="custom-input"
+                >
+              </div>
+
+              <div class="form-group">
+                <label>Nom & Prénom du Gérant / Boss :</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="newOwnerName" 
+                  placeholder="ex: Mamadou Diarra..."
+                  class="custom-input"
+                >
+              </div>
+
+              <div class="form-group">
+                <label>Téléphone / Contact :</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="newPhone" 
+                  placeholder="ex: +223 70 00 00 00..."
                   class="custom-input"
                 >
               </div>
@@ -142,7 +225,35 @@
               </div>
             </div>
 
-            <button class="btn-primary margin-top-sm" (click)="createCompany()">
+            <!-- ACTIVATION DES MODULES PAR DEFAUT -->
+            <div class="modules-selection margin-top-sm">
+              <label class="modules-section-title">Activation Modulaire des Fonctionnalités :</label>
+              <div class="modules-grid">
+                <label class="module-card-checkbox" [class.selected]="newHasSales">
+                  <input type="checkbox" [(ngModel)]="newHasSales">
+                  <div class="module-card-content">
+                    <span class="icon">🛒</span>
+                    <div>
+                      <strong>Module Vente & Caisse</strong>
+                      <p>Vente en caisse, catalogue et gestion des stocks</p>
+                    </div>
+                  </div>
+                </label>
+
+                <label class="module-card-checkbox" [class.selected]="newHasRepairs">
+                  <input type="checkbox" [(ngModel)]="newHasRepairs">
+                  <div class="module-card-content">
+                    <span class="icon">🛠️</span>
+                    <div>
+                      <strong>Module SAV & Réparations</strong>
+                      <p>Atelier, tickets de réparation, acomptes</p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <button class="btn-primary margin-top" (click)="createCompany()">
               ✨ Inscrire l'Entreprise & Créer le Compte Boss
             </button>
           </div>
@@ -158,16 +269,30 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Nom de l'Entreprise</th>
+                <th>Entreprise & Contact</th>
+                <th>Modules Activés</th>
                 <th>Statut d'Abonnement</th>
                 <th>Encaissement</th>
-                <th>Contrôle d'Accès</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let c of companies" class="table-row">
                 <td class="cell-id">#{{ c.id }}</td>
-                <td class="cell-name"><strong>{{ c.name }}</strong></td>
+                <td class="cell-name">
+                  <strong>{{ c.name }}</strong>
+                  <div *ngIf="c.ownerName || c.phone" style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">
+                    <span *ngIf="c.ownerName">👤 {{ c.ownerName }}</span>
+                    <span *ngIf="c.phone" style="margin-left: 6px;">📞 {{ c.phone }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="modules-badge-container">
+                    <span *ngIf="c.hasSalesEnabled !== false" class="module-badge badge-sales">🛒 Ventes</span>
+                    <span *ngIf="c.hasRepairsEnabled !== false" class="module-badge badge-repairs">🛠️ SAV</span>
+                    <span *ngIf="c.hasSalesEnabled === false && c.hasRepairsEnabled === false" class="module-badge badge-none">Aucun</span>
+                  </div>
+                </td>
                 <td>
                   <span class="status-pill" [class.active]="c.active" [class.blocked]="!c.active">
                     {{ c.active ? '🟢 Abonnement Actif' : '🔴 Accès Suspendu' }}
@@ -179,18 +304,23 @@
                   </button>
                 </td>
                 <td>
-                  <button 
-                    class="btn-action-status" 
-                    [class.btn-suspend]="c.active" 
-                    [class.btn-activate]="!c.active"
-                    (click)="toggleCompany(c)"
-                  >
-                    {{ c.active ? '🛑 Suspendre' : '✅ Débloquer' }}
-                  </button>
+                  <div class="table-actions-cell">
+                    <button class="btn-action-edit-comp" (click)="openEditCompanyModal(c)" title="Modifier les modules et coordonnées">
+                      ✏️ Modifier
+                    </button>
+                    <button 
+                      class="btn-action-status" 
+                      [class.btn-suspend]="c.active" 
+                      [class.btn-activate]="!c.active"
+                      (click)="toggleCompany(c)"
+                    >
+                      {{ c.active ? '🛑 Suspendre' : '✅ Débloquer' }}
+                    </button>
+                  </div>
                 </td>
               </tr>
               <tr *ngIf="companies.length === 0">
-                <td colspan="5" class="empty-state">Aucune entreprise cliente enregistrée.</td>
+                <td colspan="6" class="empty-state">Aucune entreprise cliente enregistrée.</td>
               </tr>
             </tbody>
           </table>

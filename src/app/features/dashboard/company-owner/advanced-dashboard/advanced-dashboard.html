@@ -12,9 +12,9 @@
       <ul>
         <li><a routerLink="/company-owner">🏢 Espace Propriétaire</a></li>
         <li class="active"><a routerLink="/advanced-dashboard">📊 Tableau de Bord</a></li>
-        <li><a routerLink="/stock">📦 Produits & Stock</a></li>
-        <li><a routerLink="/pos">🛒 Caisse & Ventes</a></li>
-        <li><a routerLink="/repair">🛠️ Réparations & SAV</a></li>
+        <li *ngIf="hasSales()"><a routerLink="/stock">📦 Produits & Stock</a></li>
+        <li *ngIf="hasSales()"><a routerLink="/pos">🛒 Caisse & Ventes</a></li>
+        <li *ngIf="hasRepairs()"><a routerLink="/repair">🛠️ Réparations & SAV</a></li>
       </ul>
     </nav>
   </aside>

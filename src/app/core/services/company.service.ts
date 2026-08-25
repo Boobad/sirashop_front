@@ -19,8 +19,20 @@ export class CompanyService {
     return this.http.post<Company>(this.apiUrl, company);
   }
 
-  createCompanyWithOwner(data: { companyName: string; ownerUsername: string; ownerPassword: string }): Observable<Company> {
+  createCompanyWithOwner(data: {
+    companyName: string;
+    ownerUsername: string;
+    ownerPassword: string;
+    ownerName?: string;
+    phone?: string;
+    hasSalesEnabled?: boolean;
+    hasRepairsEnabled?: boolean;
+  }): Observable<Company> {
     return this.http.post<Company>(`${this.apiUrl}/with-owner`, data);
+  }
+
+  updateCompany(companyId: number, company: Partial<Company>): Observable<Company> {
+    return this.http.put<Company>(`${this.apiUrl}/${companyId}`, company);
   }
 
   toggleCompanyActive(companyId: number): Observable<Company> {

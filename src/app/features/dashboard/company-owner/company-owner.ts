@@ -146,6 +146,24 @@ export class CompanyOwnerComponent implements OnInit {
     return this.users.filter(u => u.role !== 'COMPANY_OWNER' && u.role !== 'SUPER_ADMIN');
   }
 
+  get selectedCompany(): Company | undefined {
+    return this.companies.find(c => c.id === this.selectedCompanyId);
+  }
+
+  hasSales(): boolean {
+    if (this.selectedCompany && this.selectedCompany.hasSalesEnabled !== undefined) {
+      return this.selectedCompany.hasSalesEnabled !== false;
+    }
+    return this.authService.hasSales();
+  }
+
+  hasRepairs(): boolean {
+    if (this.selectedCompany && this.selectedCompany.hasRepairsEnabled !== undefined) {
+      return this.selectedCompany.hasRepairsEnabled !== false;
+    }
+    return this.authService.hasRepairs();
+  }
+
   getShopName(shopId?: number): string {
     if (!shopId) return 'Toutes les boutiques';
     const shop = this.shops.find(s => s.id === shopId);

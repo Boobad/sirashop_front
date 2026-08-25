@@ -11,9 +11,9 @@
       <ul>
         <li class="active"><a routerLink="/company-owner">🏢 Espace Propriétaire</a></li>
         <li><a routerLink="/advanced-dashboard">📊 Tableau de Bord</a></li>
-        <li><a routerLink="/stock">📦 Produits & Stock</a></li>
-        <li><a routerLink="/pos">🛒 Caisse & Ventes</a></li>
-        <li><a routerLink="/repair">🛠️ Réparations & SAV</a></li>
+        <li *ngIf="hasSales()"><a routerLink="/stock">📦 Produits & Stock</a></li>
+        <li *ngIf="hasSales()"><a routerLink="/pos">🛒 Caisse & Ventes</a></li>
+        <li *ngIf="hasRepairs()"><a routerLink="/repair">🛠️ Réparations & SAV</a></li>
       </ul>
     </nav>
   </aside>
@@ -95,10 +95,9 @@
             <div class="form-group">
               <label>Rôle de l'employé :</label>
               <select [(ngModel)]="editRole" class="custom-input">
-                <option value="SELLER">🛒 Vendeur (Caisse / Ventes)</option>
-                <option value="TECHNICIAN">🛠️ Technicien (Atelier SAV)</option>
-                <option value="REPAIRER">🛠️ Réparateur (Atelier SAV)</option>
-                <option value="MANAGER">📦 Gestionnaire de Boutique</option>
+                <option *ngIf="hasSales()" value="SELLER">🛒 Vendeur (Caisse / Ventes)</option>
+                <option *ngIf="hasSales()" value="MANAGER">📦 Gestionnaire de Boutique</option>
+                <option *ngIf="hasRepairs()" value="TECHNICIAN">🛠️ Technicien / Réparateur (Atelier SAV)</option>
               </select>
             </div>
 
@@ -245,8 +244,8 @@
         </div>
 
         <div class="card">
-          <h3>👥 Créer un compte Employé (Vendeur, Technicien, Gestionnaire)</h3>
-          <p>Créez un accès pour un employé et assignez-le à une boutique</p>
+          <h3>👥 Créer un compte Employé</h3>
+          <p>Créez un accès pour un membre de votre équipe et assignez-le à une boutique</p>
           
           <div class="form-vertical">
             <div class="grid-inputs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
@@ -260,10 +259,9 @@
             
             <label class="input-label">Rôle de l'employé :</label>
             <select [(ngModel)]="newRole">
-              <option value="SELLER">🛒 Vendeur (Caisse / Ventes)</option>
-              <option value="TECHNICIAN">🛠️ Technicien (Atelier SAV)</option>
-              <option value="REPAIRER">🛠️ Réparateur (Atelier SAV)</option>
-              <option value="MANAGER">📦 Gestionnaire de Boutique</option>
+              <option *ngIf="hasSales()" value="SELLER">🛒 Vendeur (Caisse / Ventes)</option>
+              <option *ngIf="hasSales()" value="MANAGER">📦 Gestionnaire de Boutique</option>
+              <option *ngIf="hasRepairs()" value="TECHNICIAN">🛠️ Technicien / Réparateur (Atelier SAV)</option>
             </select>
 
             <label class="input-label">Assigner à la Boutique :</label>

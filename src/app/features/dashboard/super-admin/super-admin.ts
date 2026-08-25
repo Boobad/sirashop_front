@@ -26,6 +26,21 @@ export class SuperAdminComponent implements OnInit {
   newCompanyName: string = '';
   newOwnerUsername: string = '';
   newOwnerPassword: string = '';
+  newOwnerName: string = '';
+  newPhone: string = '';
+  newHasSales: boolean = true;
+  newHasRepairs: boolean = true;
+
+  // Modale d'Édition d'Entreprise
+  showEditCompanyModal: boolean = false;
+  editingCompany: Company | null = null;
+  editCompanyName: string = '';
+  editOwnerName: string = '';
+  editPhone: string = '';
+  editHasSales: boolean = true;
+  editHasRepairs: boolean = true;
+  submittingEditCompany: boolean = false;
+  editCompanyError: string = '';
 
   stats: SuperAdminStats | null = null;
   payments: SubscriptionPayment[] = [];
@@ -134,22 +149,83 @@ export class SuperAdminComponent implements OnInit {
     this.companyService.createCompanyWithOwner({
       companyName: this.newCompanyName.trim(),
       ownerUsername: this.newOwnerUsername.trim(),
-      ownerPassword: this.newOwnerPassword.trim()
+      ownerPassword: this.newOwnerPassword.trim(),
+      ownerName: this.newOwnerName.trim() || undefined,
+      phone: this.newPhone.trim() || undefined,
+      hasSalesEnabled: this.newHasSales,
+      hasRepairsEnabled: this.newHasRepairs
     }).subscribe({
       next: (data) => {
         this.companies.push(data);
         this.toastService.success(
-          `Compte créé ! Un email avec les identifiants pour l'entreprise '${data.name}' (${this.newOwnerUsername}) a été préparé.`,
+          `Compte créé ! L'entreprise '${data.name}' a été inscrite avec succès.`,
           { title: '🎉 Inscription Réussie', duration: 6000 }
         );
         
         this.newCompanyName = '';
         this.newOwnerUsername = '';
         this.newOwnerPassword = '';
+        this.newOwnerName = '';
+        this.newPhone = '';
+        this.newHasSales = true;
+        this.newHasRepairs = true;
         this.loadStats();
       },
       error: (err) => {
         this.toastService.error(err, { title: 'Échec de la création d\'entreprise' });
+      }
+    });
+  }
+
+  openEditCompanyModal(c: Company): void {
+    this.editingCompany = c;
+    this.editCompanyName = c.name;
+    this.editOwnerName = c.ownerName || '';
+    this.editPhone = c.phone || '';
+    this.editHasSales = c.hasSalesEnabled !== false;
+    this.editHasRepairs = c.hasRepairsEnabled !== false;
+    this.editCompanyError = '';
+    this.showEditCompanyModal = true;
+  }
+
+  closeEditCompanyModal(): void {
+    this.showEditCompanyModal = false;
+    this.editingCompany = null;
+    this.editCompanyError = '';
+  }
+
+  submitEditCompany(): void {
+    if (!this.editingCompany || !this.editingCompany.id) return;
+    if (!this.editCompanyName.trim()) {
+      this.editCompanyError = 'Le nom de l\'entreprise est obligatoire.';
+      return;
+    }
+
+    this.submittingEditCompany = true;
+    this.editCompanyError = '';
+
+    const updatePayload: Partial<Company> = {
+      name: this.editCompanyName.trim(),
+      ownerName: this.editOwnerName.trim() || undefined,
+      phone: this.editPhone.trim() || undefined,
+      hasSalesEnabled: this.editHasSales,
+      hasRepairsEnabled: this.editHasRepairs
+    };
+
+    this.companyService.updateCompany(this.editingCompany.id, updatePayload).subscribe({
+      next: (updated) => {
+        this.submittingEditCompany = false;
+        const idx = this.companies.findIndex(c => c.id === this.editingCompany!.id);
+        if (idx !== -1) {
+          this.companies[idx] = { ...this.companies[idx], ...updated, ...updatePayload };
+        }
+        this.toastService.success(`L'entreprise '${this.editCompanyName}' a été mise à jour avec succès !`);
+        this.closeEditCompanyModal();
+      },
+      error: (err) => {
+        this.submittingEditCompany = false;
+        this.editCompanyError = typeof err === 'string' ? err : (err.error?.message || 'Erreur lors de la mise à jour');
+        this.toastService.error(err, { title: 'Erreur modification entreprise' });
       }
     });
   }

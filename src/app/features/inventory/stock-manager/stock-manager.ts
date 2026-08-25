@@ -55,6 +55,14 @@ export class StockManagerComponent implements OnInit {
     private router: Router
   ) {}
 
+  hasSales(): boolean {
+    return this.authService.hasSales();
+  }
+
+  hasRepairs(): boolean {
+    return this.authService.hasRepairs();
+  }
+
   ngOnInit(): void {
     this.currentUser = this.authService.getUser();
 
