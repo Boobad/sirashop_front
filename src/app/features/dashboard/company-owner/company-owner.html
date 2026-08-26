@@ -154,118 +154,211 @@
       <!-- TABLEAU COMPARATIF DES PERFORMANCES PAR BOUTIQUE -->
       <div *ngIf="stats && stats.shopStats && stats.shopStats.length > 0" class="card margin-top">
         <h3>📊 Comparatif des Performances par Boutique</h3>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Boutique</th>
-              <th *ngIf="hasSales()">CA Ventes</th>
-              <th *ngIf="hasSales()">Nb Ventes</th>
-              <th *ngIf="hasRepairs()">CA Réparations</th>
-              <th *ngIf="hasRepairs()">Nb Réparations</th>
-              <th>CA Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let s of stats.shopStats">
-              <td><strong>{{ s.shopName }}</strong></td>
-              <td *ngIf="hasSales()"><span class="text-green">{{ s.salesRevenue | fcfa }}</span></td>
-              <td *ngIf="hasSales()">{{ s.salesCount || 0 }}</td>
-              <td *ngIf="hasRepairs()"><span class="text-purple">{{ s.repairRevenue | fcfa }}</span></td>
-              <td *ngIf="hasRepairs()">{{ s.repairsCount || 0 }}</td>
-              <td><strong class="text-gold">{{ s.totalRevenue | fcfa }}</strong></td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Boutique</th>
+                <th *ngIf="hasSales()">CA Ventes</th>
+                <th *ngIf="hasSales()">Nb Ventes</th>
+                <th *ngIf="hasRepairs()">CA Réparations</th>
+                <th *ngIf="hasRepairs()">Nb Réparations</th>
+                <th>CA Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s of stats.shopStats">
+                <td><strong>{{ s.shopName }}</strong></td>
+                <td *ngIf="hasSales()"><span class="text-green">{{ s.salesRevenue | fcfa }}</span></td>
+                <td *ngIf="hasSales()">{{ s.salesCount || 0 }}</td>
+                <td *ngIf="hasRepairs()"><span class="text-purple">{{ s.repairRevenue | fcfa }}</span></td>
+                <td *ngIf="hasRepairs()">{{ s.repairsCount || 0 }}</td>
+                <td><strong class="text-gold">{{ s.totalRevenue | fcfa }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- SECTION 1 : JOURNAL ET AUDIT DES VENTES (SI MODULE VENTES ACTIF) -->
       <div *ngIf="hasSales()" class="card margin-top">
-        <h3>🛒 Journal d'Audit des Ventes Réalisées par Vendeur ({{ sales.length }})</h3>
-        <p>Affiche chaque transaction enregistrée en caisse avec le nom du caissier et la boutique</p>
+        <div class="card-header-flex">
+          <div>
+            <h3>🛒 Journal d'Audit des Ventes ({{ filteredSales.length }})</h3>
+            <p>Affiche les transactions enregistrées en caisse par boutique et caissier</p>
+          </div>
+          <div *ngIf="filteredSales.length > 0" class="header-total-badge text-gold">
+            Total période : {{ filteredSalesRevenue | fcfa }}
+          </div>
+        </div>
 
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>#Vente</th>
-              <th>Boutique</th>
-              <th>Vendeur / Caissier</th>
-              <th>Mode de Règlement</th>
-              <th>Montant Total</th>
-              <th>Date & Heure</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let s of sales">
-              <td>#{{ s.id }}</td>
-              <td><strong>{{ s.shopName || getShopName(s.shopId) }}</strong></td>
-              <td><span class="seller-badge">👤 {{ s.sellerUsername }}</span></td>
-              <td>
-                <span class="payment-badge">
-                  {{ s.paymentMethod === 'CASH' ? '💵 Espèces' : (s.paymentMethod === 'ORANGE_MONEY' ? '🍊 Orange Money' : (s.paymentMethod === 'MOOV_MONEY' ? '📱 Moov Money' : (s.paymentMethod === 'WAVE' ? '🌊 Wave' : (s.paymentMethod === 'CARD' ? '💳 Carte Bancaire' : s.paymentMethod)))) }}
-                </span>
-              </td>
-              <td><strong class="text-green">{{ s.totalAmount | fcfa }}</strong></td>
-              <td>{{ s.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
-            </tr>
-            <tr *ngIf="sales.length === 0">
-              <td colspan="6" class="empty-state">Aucune vente enregistrée pour le moment.</td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- FILTRES DE PERIODE ET RECHERCHE -->
+        <div class="sales-filter-header margin-top-sm">
+          <div class="period-buttons">
+            <button class="filter-btn" [class.active]="salesPeriodFilter === 'TODAY'" (click)="salesPeriodFilter = 'TODAY'">
+              📅 Aujourd'hui
+            </button>
+            <button class="filter-btn" [class.active]="salesPeriodFilter === 'YESTERDAY'" (click)="salesPeriodFilter = 'YESTERDAY'">
+              ⏳ Hier
+            </button>
+            <button class="filter-btn" [class.active]="salesPeriodFilter === 'THIS_MONTH'" (click)="salesPeriodFilter = 'THIS_MONTH'">
+              🗓️ Ce mois-ci
+            </button>
+            <button class="filter-btn" [class.active]="salesPeriodFilter === 'LAST_MONTH'" (click)="salesPeriodFilter = 'LAST_MONTH'">
+              ⏮️ Mois dernier
+            </button>
+            <button class="filter-btn" [class.active]="salesPeriodFilter === 'ALL'" (click)="salesPeriodFilter = 'ALL'">
+              Toutes les ventes
+            </button>
+          </div>
+
+          <div class="search-box">
+            <input 
+              type="text" 
+              [(ngModel)]="salesSearchQuery" 
+              placeholder="🔍 Filtrer par ticket #, vendeur, boutique..." 
+              class="search-input"
+            >
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#Vente</th>
+                <th>Boutique</th>
+                <th>Vendeur / Caissier</th>
+                <th>Mode de Règlement</th>
+                <th>Montant Total</th>
+                <th>Date & Heure</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s of filteredSales">
+                <td><span class="ticket-tag">#{{ s.id }}</span></td>
+                <td><strong>{{ s.shopName || getShopName(s.shopId) }}</strong></td>
+                <td><span class="seller-badge">👤 {{ s.sellerUsername }}</span></td>
+                <td>
+                  <span class="payment-badge">
+                    {{ s.paymentMethod === 'CASH' ? '💵 Espèces' : (s.paymentMethod === 'ORANGE_MONEY' ? '🍊 Orange Money' : (s.paymentMethod === 'MOOV_MONEY' ? '📱 Moov Money' : (s.paymentMethod === 'WAVE' ? '🌊 Wave' : (s.paymentMethod === 'CARD' ? '💳 Carte Bancaire' : s.paymentMethod)))) }}
+                  </span>
+                </td>
+                <td><strong class="text-green">{{ s.totalAmount | fcfa }}</strong></td>
+                <td class="text-muted">{{ s.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+              </tr>
+              <tr *ngIf="filteredSales.length === 0">
+                <td colspan="6" class="empty-state">Aucune vente enregistrée pour cette sélection.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- SECTION 1.5 : JOURNAL DES REPARATIONS SAV (SI MODULE SAV ACTIF) -->
       <div *ngIf="hasRepairs()" class="card margin-top">
-        <h3>🛠️ Journal des Réparations & Tickets SAV ({{ repairTickets.length }})</h3>
-        <p>Affiche tous les appareils déposés par les clients, leur état d'avancement, technicien et montants</p>
+        <div class="card-header-flex">
+          <div>
+            <h3>🛠️ Journal des Réparations & Tickets SAV ({{ filteredRepairTickets.length }})</h3>
+            <p>Affiche les appareils déposés, état d'avancement, technicien et montants</p>
+          </div>
+          <div *ngIf="filteredRepairTickets.length > 0" class="header-total-badge text-purple">
+            Total estimé : {{ filteredRepairsTotal | fcfa }}
+          </div>
+        </div>
 
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>#Ticket</th>
-              <th>Boutique / Atelier</th>
-              <th>Client & Contact</th>
-              <th>Appareil & Panne</th>
-              <th>Technicien</th>
-              <th>Statut</th>
-              <th>Coût & Acompte</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let t of repairTickets">
-              <td><strong>#T-{{ t.id }}</strong></td>
-              <td><strong>{{ t.shopName || getShopName(t.shopId) }}</strong></td>
-              <td>
-                <strong>{{ t.customerName }}</strong>
-                <div style="font-size: 0.75rem; color: #94a3b8;">📞 {{ t.customerPhone }}</div>
-              </td>
-              <td>
-                <strong>{{ t.deviceModel }}</strong>
-                <div style="font-size: 0.75rem; color: #94a3b8;">{{ t.issueDescription }}</div>
-              </td>
-              <td>
-                <span *ngIf="t.technicianUsername" class="seller-badge">🛠️ {{ t.technicianUsername }}</span>
-                <span *ngIf="!t.technicianUsername" style="color: #94a3b8; font-style: italic;">Non assigné</span>
-              </td>
-              <td>
-                <span class="status-pill status-{{ t.status?.toLowerCase() }}">
-                  {{ getStatusLabel(t.status) }}
-                </span>
-              </td>
-              <td>
-                <div class="text-green"><strong>{{ t.estimatedPrice | fcfa }}</strong></div>
-                <div *ngIf="t.depositAmount" style="font-size: 0.72rem; color: #f59e0b;">
-                  Acompte: {{ t.depositAmount | fcfa }}
-                </div>
-              </td>
-              <td>{{ t.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
-            </tr>
-            <tr *ngIf="repairTickets.length === 0">
-              <td colspan="8" class="empty-state">Aucun ticket de réparation enregistré pour le moment.</td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- FILTRES DE PERIODE ET RECHERCHE -->
+        <div class="sales-filter-header margin-top-sm">
+          <div class="period-buttons">
+            <button class="filter-btn" [class.active]="repairsPeriodFilter === 'TODAY'" (click)="repairsPeriodFilter = 'TODAY'">
+              📅 Aujourd'hui
+            </button>
+            <button class="filter-btn" [class.active]="repairsPeriodFilter === 'YESTERDAY'" (click)="repairsPeriodFilter = 'YESTERDAY'">
+              ⏳ Hier
+            </button>
+            <button class="filter-btn" [class.active]="repairsPeriodFilter === 'THIS_MONTH'" (click)="repairsPeriodFilter = 'THIS_MONTH'">
+              🗓️ Ce mois-ci
+            </button>
+            <button class="filter-btn" [class.active]="repairsPeriodFilter === 'LAST_MONTH'" (click)="repairsPeriodFilter = 'LAST_MONTH'">
+              ⏮️ Mois dernier
+            </button>
+            <button class="filter-btn" [class.active]="repairsPeriodFilter === 'ALL'" (click)="repairsPeriodFilter = 'ALL'">
+              Tous les tickets
+            </button>
+          </div>
+
+          <div class="search-box">
+            <input 
+              type="text" 
+              [(ngModel)]="repairsSearchQuery" 
+              placeholder="🔍 Filtrer par ticket #, client, appareil, tech..." 
+              class="search-input"
+            >
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table sav-table">
+            <thead>
+              <tr>
+                <th>#Ticket</th>
+                <th>Boutique / Atelier</th>
+                <th>Client & Contact</th>
+                <th>Appareil & Panne</th>
+                <th>Technicien</th>
+                <th style="text-align: center;">Statut</th>
+                <th style="text-align: right;">Coût & Acompte</th>
+                <th style="text-align: right;">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of filteredRepairTickets">
+                <td><span class="ticket-tag">#T-{{ t.id }}</span></td>
+                <td><strong>{{ t.shopName || getShopName(t.shopId) }}</strong></td>
+                <td>
+                  <div class="cell-stacked">
+                    <strong class="cell-main-text">{{ t.customerName }}</strong>
+                    <span class="cell-sub-text">📞 {{ t.customerPhone }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-stacked">
+                    <strong class="cell-main-text">{{ t.deviceModel }}</strong>
+                    <span class="cell-sub-text text-truncate" [title]="t.issueDescription">{{ t.issueDescription }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span *ngIf="t.technicianUsername" class="tech-pill" [title]="t.technicianUsername">
+                    🛠️ {{ formatTechName(t.technicianUsername) }}
+                  </span>
+                  <span *ngIf="!t.technicianUsername" class="text-muted italic">Non assigné</span>
+                </td>
+                <td style="text-align: center;">
+                  <span class="status-pill status-{{ t.status?.toLowerCase() }}">
+                    {{ getStatusLabel(t.status) }}
+                  </span>
+                </td>
+                <td style="text-align: right;">
+                  <div class="cell-stacked cell-right">
+                    <strong class="text-green">{{ t.estimatedPrice | fcfa }}</strong>
+                    <span *ngIf="t.depositAmount" class="deposit-tag">
+                      Acompte: {{ t.depositAmount | fcfa }}
+                    </span>
+                  </div>
+                </td>
+                <td style="text-align: right; white-space: nowrap;">
+                  <div class="cell-stacked cell-right">
+                    <span class="date-day">{{ t.createdAt | date:'dd/MM/yyyy' }}</span>
+                    <span class="date-hour">{{ t.createdAt | date:'HH:mm' }}</span>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="filteredRepairTickets.length === 0">
+                <td colspan="8" class="empty-state">Aucun ticket de réparation enregistré pour cette sélection.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- SECTION 2 : GESTION DES BOUTIQUES & EMPLOYES -->

@@ -41,15 +41,48 @@ export class ToastService {
    */
   public extractErrorMessage(err: any, fallbackMessage: string = 'Une erreur est survenue'): string {
     if (!err) return fallbackMessage;
-    if (typeof err === 'string') return err;
+    if (typeof err === 'string') return this.sanitizeRawMessage(err, fallbackMessage);
+    
+    let rawMsg: string | null = null;
     if (err.error) {
-      if (typeof err.error === 'string') return err.error;
-      if (err.error.message) return err.error.message;
-      if (err.error.error) return err.error.error;
+      if (typeof err.error === 'string') rawMsg = err.error;
+      else if (err.error.message) rawMsg = err.error.message;
+      else if (err.error.error) rawMsg = err.error.error;
     }
-    if (err.message) return err.message;
-    if (err.statusText && err.status !== 0) return `${err.statusText} (${err.status})`;
-    return fallbackMessage;
+    if (!rawMsg && err.message) rawMsg = err.message;
+    if (!rawMsg && err.statusText && err.status !== 0) rawMsg = `${err.statusText} (${err.status})`;
+
+    return this.sanitizeRawMessage(rawMsg || fallbackMessage, fallbackMessage);
+  }
+
+  private sanitizeRawMessage(rawMsg: string, fallback: string): string {
+    if (!rawMsg) return fallback;
+
+    // 1. Détection des doublons SQL (MySQL Duplicate entry 'val' for key '...')
+    if (rawMsg.includes('Duplicate entry') || rawMsg.includes('constraint')) {
+      const match = rawMsg.match(/Duplicate entry '([^']+)'/i);
+      const val = match ? match[1] : '';
+      if (rawMsg.toLowerCase().includes('companies') || rawMsg.toLowerCase().includes('company')) {
+        return val ? `Une entreprise avec le nom ou l'identifiant '${val}' existe déjà.` : `Une entreprise avec ces informations existe déjà.`;
+      }
+      if (rawMsg.toLowerCase().includes('users') || rawMsg.toLowerCase().includes('email')) {
+        return val ? `L'adresse ou l'identifiant '${val}' est déjà utilisé par un autre compte.` : `Ce compte existe déjà.`;
+      }
+      return val ? `La valeur '${val}' est déjà utilisée et doit être unique.` : `Un enregistrement avec ces informations existe déjà.`;
+    }
+
+    // 2. Détection des erreurs d'exécution SQL brutes Hibernate
+    if (rawMsg.includes('could not execute statement') || rawMsg.includes('SQL [') || rawMsg.includes('JDBC exception')) {
+      return `Impossible d'enregistrer : une contrainte d'unicité ou d'intégrité en base de données a été violée.`;
+    }
+
+    // 3. Si le message est un JSON encapsulé
+    try {
+      const parsed = JSON.parse(rawMsg);
+      if (parsed.message) return this.sanitizeRawMessage(parsed.message, fallback);
+    } catch (_) {}
+
+    return rawMsg;
   }
 
   public show(type: ToastType, message: string, options?: ToastOptions): string {

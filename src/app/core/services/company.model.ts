@@ -9,3 +9,13 @@ export interface Company {
   createdAt?: string;
 }
 
+export interface CompanyRegistrationDto {
+  companyName: string;
+  phone: string;
+  ownerName: string;
+  ownerEmail: string;
+  ownerPassword?: string;
+  hasSalesEnabled: boolean;
+  hasRepairsEnabled: boolean;
+}
+

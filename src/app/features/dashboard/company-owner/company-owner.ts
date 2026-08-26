@@ -38,6 +38,14 @@ export class CompanyOwnerComponent implements OnInit {
   stats: Stats | null = null;
   currentUser: any = null;
 
+  // Filtres et Recherche - Ventes & Caisses
+  salesPeriodFilter: 'ALL' | 'TODAY' | 'YESTERDAY' | 'THIS_MONTH' | 'LAST_MONTH' = 'TODAY';
+  salesSearchQuery: string = '';
+
+  // Filtres et Recherche - Réparations SAV
+  repairsPeriodFilter: 'ALL' | 'TODAY' | 'YESTERDAY' | 'THIS_MONTH' | 'LAST_MONTH' = 'TODAY';
+  repairsSearchQuery: string = '';
+
   // Changement de mot de passe
   showPasswordModal: boolean = false;
   oldPasswordInput: string = '';
@@ -209,13 +217,115 @@ export class CompanyOwnerComponent implements OnInit {
   getStatusLabel(status?: string): string {
     switch (status) {
       case 'RECEIVED': return '📥 Reçu';
-      case 'DIAGNOSING': return '🔍 Diagnostiqué';
+      case 'DIAGNOSING': return '🔍 Diagnostic';
       case 'IN_PROGRESS': return '⚡ En cours';
       case 'REPAIRED': return '✅ Réparé';
       case 'DELIVERED': return '🎉 Livré';
       case 'CANCELLED': return '❌ Annulé';
       default: return status || 'Inconnu';
     }
+  }
+
+  formatTechName(username?: string): string {
+    if (!username) return 'Non assigné';
+    return this.authService.getUserDisplayName({ username });
+  }
+
+  private isSameDay(d1: Date, d2: Date): boolean {
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth() &&
+           d1.getDate() === d2.getDate();
+  }
+
+  private isSameMonth(d1: Date, d2: Date): boolean {
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth();
+  }
+
+  get filteredSales(): Sale[] {
+    const now = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+    let list = this.sales;
+
+    switch (this.salesPeriodFilter) {
+      case 'TODAY':
+        list = list.filter(s => s.createdAt && this.isSameDay(new Date(s.createdAt), now));
+        break;
+      case 'YESTERDAY':
+        list = list.filter(s => s.createdAt && this.isSameDay(new Date(s.createdAt), yesterday));
+        break;
+      case 'THIS_MONTH':
+        list = list.filter(s => s.createdAt && this.isSameMonth(new Date(s.createdAt), now));
+        break;
+      case 'LAST_MONTH':
+        list = list.filter(s => s.createdAt && this.isSameMonth(new Date(s.createdAt), lastMonth));
+        break;
+    }
+
+    if (this.salesSearchQuery.trim()) {
+      const q = this.salesSearchQuery.toLowerCase().trim();
+      list = list.filter(s => 
+        (s.id && s.id.toString().includes(q)) ||
+        (s.sellerUsername && s.sellerUsername.toLowerCase().includes(q)) ||
+        (s.shopName && s.shopName.toLowerCase().includes(q)) ||
+        (s.paymentMethod && s.paymentMethod.toLowerCase().includes(q)) ||
+        (s.items && s.items.some((it: any) => it.productName && it.productName.toLowerCase().includes(q)))
+      );
+    }
+
+    return list;
+  }
+
+  get filteredSalesRevenue(): number {
+    return this.filteredSales.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+  }
+
+  get filteredRepairTickets(): RepairTicket[] {
+    const now = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+    let list = this.repairTickets;
+
+    switch (this.repairsPeriodFilter) {
+      case 'TODAY':
+        list = list.filter(t => t.createdAt && this.isSameDay(new Date(t.createdAt), now));
+        break;
+      case 'YESTERDAY':
+        list = list.filter(t => t.createdAt && this.isSameDay(new Date(t.createdAt), yesterday));
+        break;
+      case 'THIS_MONTH':
+        list = list.filter(t => t.createdAt && this.isSameMonth(new Date(t.createdAt), now));
+        break;
+      case 'LAST_MONTH':
+        list = list.filter(t => t.createdAt && this.isSameMonth(new Date(t.createdAt), lastMonth));
+        break;
+    }
+
+    if (this.repairsSearchQuery.trim()) {
+      const q = this.repairsSearchQuery.toLowerCase().trim();
+      list = list.filter(t => 
+        (t.id && t.id.toString().includes(q)) ||
+        (t.customerName && t.customerName.toLowerCase().includes(q)) ||
+        (t.customerPhone && t.customerPhone.includes(q)) ||
+        (t.deviceModel && t.deviceModel.toLowerCase().includes(q)) ||
+        (t.technicianUsername && t.technicianUsername.toLowerCase().includes(q)) ||
+        (t.status && t.status.toLowerCase().includes(q)) ||
+        (t.shopName && t.shopName.toLowerCase().includes(q))
+      );
+    }
+
+    return list;
+  }
+
+  get filteredRepairsTotal(): number {
+    return this.filteredRepairTickets.reduce((sum, t) => sum + (t.estimatedPrice || 0), 0);
   }
 
   openPasswordModal(): void {

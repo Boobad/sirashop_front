@@ -24,12 +24,12 @@ export class SuperAdminComponent implements OnInit {
 
   // Formulaire d'inscription Entreprise + Propriétaire
   newCompanyName: string = '';
-  newOwnerUsername: string = '';
-  newOwnerPassword: string = '';
   newOwnerName: string = '';
+  newOwnerEmail: string = '';
   newPhone: string = '';
+  newOwnerPassword: string = '';
   newHasSales: boolean = true;
-  newHasRepairs: boolean = true;
+  newHasRepairs: boolean = false;
 
   // Modale d'Édition d'Entreprise
   showEditCompanyModal: boolean = false;
@@ -145,17 +145,35 @@ export class SuperAdminComponent implements OnInit {
       this.toastService.warning('Veuillez renseigner le nom de l\'entreprise.');
       return;
     }
-    if (!this.newOwnerUsername.trim()) {
-      this.toastService.warning('Veuillez définir un identifiant pour le Propriétaire (Boss).');
+    if (!this.newPhone.trim()) {
+      this.toastService.warning('Le numéro de téléphone est obligatoire.');
+      return;
+    }
+    const cleanPhone = this.newPhone.replace(/\D/g, '');
+    if (cleanPhone.length < 8) {
+      this.toastService.warning('Le numéro de téléphone doit comporter au moins 8 chiffres.');
+      return;
+    }
+    if (!this.newOwnerName.trim()) {
+      this.toastService.warning('Veuillez renseigner le nom et prénom du propriétaire.');
+      return;
+    }
+    if (!this.newOwnerEmail.trim()) {
+      this.toastService.warning('L\'adresse email du propriétaire est obligatoire.');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.newOwnerEmail.trim())) {
+      this.toastService.warning('Veuillez renseigner une adresse email valide (ex: contact@entreprise.ml).');
       return;
     }
 
     this.companyService.createCompanyWithOwner({
       companyName: this.newCompanyName.trim(),
-      ownerUsername: this.newOwnerUsername.trim(),
+      phone: this.newPhone.trim(),
+      ownerName: this.newOwnerName.trim(),
+      ownerEmail: this.newOwnerEmail.trim(),
       ownerPassword: this.newOwnerPassword.trim() || undefined,
-      ownerName: this.newOwnerName.trim() || undefined,
-      phone: this.newPhone.trim() || undefined,
       hasSalesEnabled: this.newHasSales,
       hasRepairsEnabled: this.newHasRepairs
     }).subscribe({
@@ -167,12 +185,12 @@ export class SuperAdminComponent implements OnInit {
         );
         
         this.newCompanyName = '';
-        this.newOwnerUsername = '';
-        this.newOwnerPassword = '';
-        this.newOwnerName = '';
         this.newPhone = '';
+        this.newOwnerName = '';
+        this.newOwnerEmail = '';
+        this.newOwnerPassword = '';
         this.newHasSales = true;
-        this.newHasRepairs = true;
+        this.newHasRepairs = false;
         this.loadStats();
       },
       error: (err) => {

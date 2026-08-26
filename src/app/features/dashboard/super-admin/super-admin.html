@@ -188,31 +188,31 @@
               </div>
 
               <div class="form-group">
-                <label>Nom & Prénom du Gérant / Boss :</label>
+                <label>Numéro de Téléphone :</label>
+                <input 
+                  type="tel" 
+                  [(ngModel)]="newPhone" 
+                  placeholder="Numéro de téléphone (ex: 76000000)..."
+                  class="custom-input"
+                >
+              </div>
+
+              <div class="form-group">
+                <label>Prénom & Nom du Propriétaire :</label>
                 <input 
                   type="text" 
                   [(ngModel)]="newOwnerName" 
-                  placeholder="Nom et prénom du gérant..."
+                  placeholder="Nom et prénom du propriétaire..."
                   class="custom-input"
                 >
               </div>
 
               <div class="form-group">
-                <label>Téléphone / Contact :</label>
+                <label>Email du Propriétaire (Connexion) :</label>
                 <input 
-                  type="text" 
-                  [(ngModel)]="newPhone" 
-                  placeholder="Numéro de téléphone..."
-                  class="custom-input"
-                >
-              </div>
-
-              <div class="form-group">
-                <label>Identifiant du Propriétaire (Boss) :</label>
-                <input 
-                  type="text" 
-                  [(ngModel)]="newOwnerUsername" 
-                  placeholder="Identifiant de connexion..."
+                  type="email" 
+                  [(ngModel)]="newOwnerEmail" 
+                  placeholder="Email unique du propriétaire..."
                   class="custom-input"
                 >
               </div>

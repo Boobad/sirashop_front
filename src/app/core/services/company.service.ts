@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Company } from './company.model';
+import { Company, CompanyRegistrationDto } from './company.model';
 
 @Injectable({
   providedIn: 'root'
@@ -19,15 +19,7 @@ export class CompanyService {
     return this.http.post<Company>(this.apiUrl, company);
   }
 
-  createCompanyWithOwner(data: {
-    companyName: string;
-    ownerUsername: string;
-    ownerPassword?: string;
-    ownerName?: string;
-    phone?: string;
-    hasSalesEnabled?: boolean;
-    hasRepairsEnabled?: boolean;
-  }): Observable<Company> {
+  createCompanyWithOwner(data: CompanyRegistrationDto): Observable<Company> {
     return this.http.post<Company>(`${this.apiUrl}/with-owner`, data);
   }
 
