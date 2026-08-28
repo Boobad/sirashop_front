@@ -19,10 +19,13 @@ import { Stats } from '../../../core/services/stats.model';
 import { Sale } from '../../../core/services/sale.model';
 import { RepairTicket } from '../../../core/services/repair.model';
 
+import { ReceiptModalComponent } from '../../../shared/components/receipt-modal/receipt-modal.component';
+import { ReceiptService } from '../../../core/services/receipt.service';
+
 @Component({
   selector: 'app-company-owner',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FcfaPipe],
+  imports: [CommonModule, FormsModule, RouterModule, FcfaPipe, ReceiptModalComponent],
   templateUrl: './company-owner.html',
   styleUrls: ['./company-owner.css']
 })
@@ -86,6 +89,7 @@ export class CompanyOwnerComponent implements OnInit {
     private saleService: SaleService,
     private repairService: RepairService,
     private authService: AuthService,
+    private receiptService: ReceiptService,
     private toastService: ToastService,
     private confirmDialogService: ConfirmDialogService,
     private router: Router
@@ -326,6 +330,56 @@ export class CompanyOwnerComponent implements OnInit {
 
   get filteredRepairsTotal(): number {
     return this.filteredRepairTickets.reduce((sum, t) => sum + (t.estimatedPrice || 0), 0);
+  }
+
+  reprintSaleReceipt(sale: Sale): void {
+    const shop = this.shops.find(s => s.id === sale.shopId);
+    this.receiptService.openReceipt({
+      ticketType: 'SALE',
+      saleId: sale.id,
+      ticketNumber: sale.id,
+      date: sale.createdAt,
+      companyName: this.selectedCompany?.name || 'SIRASHOP',
+      shopName: sale.shopName || shop?.name || 'Point de Vente',
+      shopAddress: shop?.address,
+      sellerName: sale.sellerUsername,
+      customerName: 'Client Comptoir',
+      items: sale.items?.map(it => ({
+        productName: it.productName || 'Article',
+        quantity: it.quantity || 1,
+        unitPrice: it.unitPrice || 0,
+        totalPrice: it.totalPrice || ((it.quantity || 1) * (it.unitPrice || 0))
+      })) || [],
+      totalAmount: sale.totalAmount || 0,
+      paymentMethod: sale.paymentMethod || 'Espèces'
+    });
+  }
+
+  reprintRepairReceipt(ticket: RepairTicket): void {
+    const shop = this.shops.find(s => s.id === ticket.shopId);
+    const tech = this.users.find(u => u.id === ticket.technicianId || u.username === ticket.technicianUsername);
+    const techName = tech ? this.getUserDisplayName(tech) : (ticket.technicianUsername ? this.authService.getUserDisplayName({ username: ticket.technicianUsername }) : 'Non assigné');
+    const statusLabel = this.getStatusLabel(ticket.status);
+
+    this.receiptService.openReceipt({
+      ticketType: 'REPAIR',
+      ticketNumber: ticket.id,
+      date: ticket.createdAt || new Date(),
+      companyName: this.selectedCompany?.name || 'SIRASHOP ATELIER SAV',
+      shopName: ticket.shopName || shop?.name || 'Atelier SAV',
+      shopAddress: shop?.address,
+      sellerName: this.getUserDisplayName(this.currentUser),
+      technicianName: techName,
+      customerName: ticket.customerName,
+      customerPhone: ticket.customerPhone,
+      deviceModel: ticket.deviceModel,
+      issueDescription: ticket.issueDescription,
+      statusLabel: statusLabel,
+      totalAmount: ticket.estimatedPrice || 0,
+      depositAmount: ticket.depositAmount || 0,
+      remainingAmount: (ticket.estimatedPrice || 0) - (ticket.depositAmount || 0),
+      paymentMethod: (ticket.depositAmount && ticket.depositAmount > 0) ? 'Acompte versé' : 'À régler au retrait'
+    });
   }
 
   openPasswordModal(): void {

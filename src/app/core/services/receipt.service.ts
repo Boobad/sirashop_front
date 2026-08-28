@@ -8,17 +8,25 @@ export interface ReceiptItem {
 }
 
 export interface ReceiptData {
+  ticketType?: 'SALE' | 'REPAIR';
   saleId?: number | string;
+  ticketNumber?: string | number;
   date?: string | Date;
   companyName?: string;
   shopName?: string;
   shopAddress?: string;
   sellerName?: string;
   customerName?: string;
-  items: ReceiptItem[];
+  customerPhone?: string;
+  deviceModel?: string;
+  issueDescription?: string;
+  technicianName?: string;
+  statusLabel?: string;
+  items?: ReceiptItem[];
   totalAmount: number;
+  depositAmount?: number;
+  remainingAmount?: number;
   paymentMethod?: string;
-  ticketNumber?: string;
 }
 
 @Injectable({

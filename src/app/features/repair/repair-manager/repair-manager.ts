@@ -13,10 +13,13 @@ import { Shop } from '../../../core/services/shop.model';
 import { User } from '../../../core/services/user.model';
 import { RepairTicket, RepairStatus } from '../../../core/services/repair.model';
 
+import { ReceiptModalComponent } from '../../../shared/components/receipt-modal/receipt-modal.component';
+import { ReceiptService } from '../../../core/services/receipt.service';
+
 @Component({
   selector: 'app-repair-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FcfaPipe],
+  imports: [CommonModule, FormsModule, RouterModule, FcfaPipe, ReceiptModalComponent],
   templateUrl: './repair-manager.html',
   styleUrls: ['./repair-manager.css']
 })
@@ -60,6 +63,7 @@ export class RepairManagerComponent implements OnInit {
     private userService: UserService,
     private repairService: RepairService,
     private authService: AuthService,
+    private receiptService: ReceiptService,
     private toastService: ToastService,
     private confirmDialogService: ConfirmDialogService,
     private router: Router
@@ -75,6 +79,17 @@ export class RepairManagerComponent implements OnInit {
 
   getUserDisplayName(user?: any): string {
     return this.authService.getUserDisplayName(user || this.currentUser);
+  }
+
+  getTechnicianDisplayName(ticket: RepairTicket): string {
+    const tech = this.technicians.find(u => u.id === ticket.technicianId || u.username === ticket.technicianUsername);
+    if (tech) {
+      return this.getUserDisplayName(tech);
+    }
+    if (ticket.technicianUsername) {
+      return this.authService.getUserDisplayName({ username: ticket.technicianUsername });
+    }
+    return 'Non assigné';
   }
 
   getRoleLabel(role?: string): string {
@@ -158,6 +173,9 @@ export class RepairManagerComponent implements OnInit {
           { title: '🛠️ Ticket SAV Enregistré', duration: 5000 }
         );
 
+        // Ouvrir automatiquement le reçu d'atelier imprimable
+        this.printTicketReceipt(ticket);
+
         this.customerName = '';
         this.customerPhone = '';
         this.deviceModel = '';
@@ -169,6 +187,33 @@ export class RepairManagerComponent implements OnInit {
       error: (err) => {
         this.toastService.error(err, { title: 'Erreur création ticket' });
       }
+    });
+  }
+
+  printTicketReceipt(ticket: RepairTicket): void {
+    const shop = this.shops.find(s => s.id === ticket.shopId) || (this.currentUser?.shopId ? this.shops.find(s => s.id === this.currentUser.shopId) : undefined);
+    const tech = this.technicians.find(u => u.id === ticket.technicianId || u.username === ticket.technicianUsername);
+    const techName = tech ? this.getUserDisplayName(tech) : (ticket.technicianUsername ? this.authService.getUserDisplayName({ username: ticket.technicianUsername }) : 'Non assigné');
+    const statusObj = this.statuses.find(s => s.value === ticket.status);
+
+    this.receiptService.openReceipt({
+      ticketType: 'REPAIR',
+      ticketNumber: ticket.id,
+      date: ticket.createdAt || new Date(),
+      companyName: this.currentUser?.companyName || 'SIRASHOP ATELIER SAV',
+      shopName: shop ? shop.name : (ticket.shopName || 'Atelier SAV'),
+      shopAddress: shop?.address,
+      sellerName: this.getUserDisplayName(this.currentUser),
+      technicianName: techName,
+      customerName: ticket.customerName,
+      customerPhone: ticket.customerPhone,
+      deviceModel: ticket.deviceModel,
+      issueDescription: ticket.issueDescription,
+      statusLabel: statusObj?.label || ticket.status || 'En attente',
+      totalAmount: ticket.estimatedPrice || 0,
+      depositAmount: ticket.depositAmount || 0,
+      remainingAmount: (ticket.estimatedPrice || 0) - (ticket.depositAmount || 0),
+      paymentMethod: (ticket.depositAmount && ticket.depositAmount > 0) ? 'Acompte versé' : 'À régler au retrait'
     });
   }
 
@@ -231,7 +276,7 @@ export class RepairManagerComponent implements OnInit {
       : { depositAmount: this.paymentInputValue };
 
     const ticketId = this.activePaymentTicket.id;
-    const amountVal = this.paymentInputValue;
+    const amountVal = this.paymentInputValue;  
 
     this.repairService.updatePayment(ticketId, payload).subscribe({
       next: (updatedTicket: RepairTicket) => {

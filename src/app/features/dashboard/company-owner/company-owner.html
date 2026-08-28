@@ -232,6 +232,7 @@
                 <th>Mode de Règlement</th>
                 <th>Montant Total</th>
                 <th>Date & Heure</th>
+                <th style="text-align: right;">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -246,9 +247,14 @@
                 </td>
                 <td><strong class="text-green">{{ s.totalAmount | fcfa }}</strong></td>
                 <td class="text-muted">{{ s.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td style="text-align: right;">
+                  <button class="btn-action-sm btn-action-edit" (click)="reprintSaleReceipt(s)" title="Imprimer / Réimprimer le reçu de caisse">
+                    🖨️ Reçu
+                  </button>
+                </td>
               </tr>
               <tr *ngIf="filteredSales.length === 0">
-                <td colspan="6" class="empty-state">Aucune vente enregistrée pour cette sélection.</td>
+                <td colspan="7" class="empty-state">Aucune vente enregistrée pour cette sélection.</td>
               </tr>
             </tbody>
           </table>
@@ -309,6 +315,7 @@
                 <th style="text-align: center;">Statut</th>
                 <th style="text-align: right;">Coût & Acompte</th>
                 <th style="text-align: right;">Date</th>
+                <th style="text-align: right;">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -352,9 +359,14 @@
                     <span class="date-hour">{{ t.createdAt | date:'HH:mm' }}</span>
                   </div>
                 </td>
+                <td style="text-align: right;">
+                  <button class="btn-action-sm btn-action-edit" (click)="reprintRepairReceipt(t)" title="Imprimer la fiche de prise en charge SAV">
+                    🖨️ Reçu
+                  </button>
+                </td>
               </tr>
               <tr *ngIf="filteredRepairTickets.length === 0">
-                <td colspan="8" class="empty-state">Aucun ticket de réparation enregistré pour cette sélection.</td>
+                <td colspan="9" class="empty-state">Aucun ticket de réparation enregistré pour cette sélection.</td>
               </tr>
             </tbody>
           </table>
@@ -485,4 +497,7 @@
 
     </section>
   </main>
+
+  <!-- MODALE D'IMPRESSION DES TICKETS ET REÇUS (VENTES ET SAV) -->
+  <app-receipt-modal></app-receipt-modal>
 </div>

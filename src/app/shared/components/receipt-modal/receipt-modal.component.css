@@ -63,6 +63,60 @@
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
+.badge-repair-glow {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.sav-details-block {
+  margin: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sav-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.sav-label {
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.sav-value {
+  color: #111827;
+  text-align: right;
+}
+
+.text-amber {
+  color: #d97706;
+}
+
+.text-bold {
+  font-weight: 800;
+  color: #111827;
+}
+
+.sav-warning {
+  font-weight: 700;
+  color: #b91c1c;
+  font-size: 0.73rem;
+  margin: 6px 0;
+}
+
 .top-bar-title h3 {
   font-size: 1.05rem;
   color: #f8fafc;

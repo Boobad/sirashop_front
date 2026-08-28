@@ -9,8 +9,12 @@
     <!-- Top Modal Header (Visible in screen, hidden during print) -->
     <div class="modal-top-bar no-print">
       <div class="top-bar-title">
-        <span class="badge-success-glow">🎉 Vente Réussie</span>
-        <h3>Ticket de Caisse & Reçu de Vente</h3>
+        <span *ngIf="receiptService.receiptData()?.ticketType === 'REPAIR'" class="badge-repair-glow">🛠️ Atelier SAV</span>
+        <span *ngIf="receiptService.receiptData()?.ticketType !== 'REPAIR'" class="badge-success-glow">🎉 Vente Réussie</span>
+        
+        <h3>
+          {{ receiptService.receiptData()?.ticketType === 'REPAIR' ? 'Fiche de Prise en Charge & Reçu SAV' : 'Ticket de Caisse & Reçu de Vente' }}
+        </h3>
       </div>
       <button class="btn-close-modal" (click)="close()" title="Fermer">✕</button>
     </div>
@@ -19,7 +23,7 @@
     <div class="receipt-paper" id="printable-receipt">
       <div class="receipt-header">
         <div class="receipt-company-title">{{ receiptService.receiptData()?.companyName || 'ENTREPRISE' }}</div>
-        <div class="receipt-shop-name">{{ receiptService.receiptData()?.shopName || 'Point de Vente' }}</div>
+        <div class="receipt-shop-name">{{ receiptService.receiptData()?.shopName || 'Point de Vente & SAV' }}</div>
         <div *ngIf="receiptService.receiptData()?.shopAddress" class="receipt-address">
           📍 {{ receiptService.receiptData()?.shopAddress }}
         </div>
@@ -27,10 +31,11 @@
 
       <div class="receipt-divider">--------------------------------</div>
 
+      <!-- METADATA VENTE / REPARATION -->
       <div class="receipt-meta">
         <div class="meta-row">
-          <span>Ticket :</span>
-          <strong>#{{ receiptService.receiptData()?.saleId || receiptService.receiptData()?.ticketNumber || 'N/A' }}</strong>
+          <span>{{ receiptService.receiptData()?.ticketType === 'REPAIR' ? 'N° Ticket SAV :' : 'Ticket :' }}</span>
+          <strong>#{{ receiptService.receiptData()?.ticketType === 'REPAIR' ? 'T-' : '' }}{{ receiptService.receiptData()?.saleId || receiptService.receiptData()?.ticketNumber || 'N/A' }}</strong>
         </div>
         <div class="meta-row">
           <span>Date :</span>
@@ -40,51 +45,101 @@
           <span>Vendeur :</span>
           <span>{{ receiptService.receiptData()?.sellerName }}</span>
         </div>
+        <div *ngIf="receiptService.receiptData()?.technicianName" class="meta-row">
+          <span>Technicien :</span>
+          <span>{{ receiptService.receiptData()?.technicianName }}</span>
+        </div>
         <div *ngIf="receiptService.receiptData()?.customerName" class="meta-row">
           <span>Client :</span>
-          <span>{{ receiptService.receiptData()?.customerName }}</span>
+          <strong>{{ receiptService.receiptData()?.customerName }}</strong>
+        </div>
+        <div *ngIf="receiptService.receiptData()?.customerPhone" class="meta-row">
+          <span>Téléphone :</span>
+          <span>{{ receiptService.receiptData()?.customerPhone }}</span>
+        </div>
+        <div *ngIf="receiptService.receiptData()?.statusLabel" class="meta-row">
+          <span>Statut :</span>
+          <span>{{ receiptService.receiptData()?.statusLabel }}</span>
         </div>
       </div>
 
-      <div class="receipt-divider">================================</div>
-
-      <table class="receipt-table">
-        <thead>
-          <tr>
-            <th class="col-item">Article</th>
-            <th class="col-qty">Qté</th>
-            <th class="col-price">P.U.</th>
-            <th class="col-total">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of receiptService.receiptData()?.items">
-            <td class="col-item">{{ item.productName }}</td>
-            <td class="col-qty">{{ item.quantity }}</td>
-            <td class="col-price">{{ item.unitPrice | fcfa }}</td>
-            <td class="col-total">{{ item.totalPrice | fcfa }}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="receipt-divider">================================</div>
-
-      <div class="receipt-totals">
-        <div class="total-row grand-total-row">
-          <span>MONTANT TOTAL :</span>
-          <span>{{ receiptService.receiptData()?.totalAmount | fcfa }}</span>
+      <!-- CORPS CAS 1 : TICKET REPARATION SAV -->
+      <div *ngIf="receiptService.receiptData()?.ticketType === 'REPAIR'">
+        <div class="receipt-divider">================================</div>
+        <div class="sav-details-block">
+          <div class="sav-detail-row">
+            <span class="sav-label">Appareil / Modèle :</span>
+            <strong class="sav-value">{{ receiptService.receiptData()?.deviceModel }}</strong>
+          </div>
+          <div *ngIf="receiptService.receiptData()?.issueDescription" class="sav-detail-row">
+            <span class="sav-label">Panne / Problème :</span>
+            <span class="sav-value">{{ receiptService.receiptData()?.issueDescription }}</span>
+          </div>
         </div>
-        <div class="total-row sub-row">
-          <span>Mode de Règlement :</span>
-          <span>{{ receiptService.receiptData()?.paymentMethod || 'Espèces' }}</span>
+
+        <div class="receipt-divider">================================</div>
+
+        <div class="receipt-totals">
+          <div class="total-row grand-total-row">
+            <span>COÛT TOTAL ESTIMÉ :</span>
+            <span>{{ receiptService.receiptData()?.totalAmount | fcfa }}</span>
+          </div>
+          <div class="total-row sub-row text-amber">
+            <span>Acompte Versé :</span>
+            <span>{{ (receiptService.receiptData()?.depositAmount || 0) | fcfa }}</span>
+          </div>
+          <div class="total-row sub-row text-bold">
+            <span>Reste à Payer au Retrait :</span>
+            <span>{{ ((receiptService.receiptData()?.totalAmount || 0) - (receiptService.receiptData()?.depositAmount || 0)) | fcfa }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CORPS CAS 2 : VENTE EN CAISSE STANDARD -->
+      <div *ngIf="receiptService.receiptData()?.ticketType !== 'REPAIR'">
+        <div class="receipt-divider">================================</div>
+
+        <table class="receipt-table">
+          <thead>
+            <tr>
+              <th class="col-item">Article</th>
+              <th class="col-qty">Qté</th>
+              <th class="col-price">P.U.</th>
+              <th class="col-total">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of receiptService.receiptData()?.items">
+              <td class="col-item">{{ item.productName }}</td>
+              <td class="col-qty">{{ item.quantity }}</td>
+              <td class="col-price">{{ item.unitPrice | fcfa }}</td>
+              <td class="col-total">{{ item.totalPrice | fcfa }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="receipt-divider">================================</div>
+
+        <div class="receipt-totals">
+          <div class="total-row grand-total-row">
+            <span>MONTANT TOTAL :</span>
+            <span>{{ receiptService.receiptData()?.totalAmount | fcfa }}</span>
+          </div>
+          <div class="total-row sub-row">
+            <span>Mode de Règlement :</span>
+            <span>{{ receiptService.receiptData()?.paymentMethod || 'Espèces' }}</span>
+          </div>
         </div>
       </div>
 
       <div class="receipt-divider">--------------------------------</div>
 
       <div class="receipt-footer">
+        <p *ngIf="receiptService.receiptData()?.ticketType === 'REPAIR'" class="sav-warning">
+          ⚠️ Veuillez impérativement conserver ce ticket pour le retrait de votre appareil.
+        </p>
         <p>🙏 Merci pour votre visite et votre confiance !</p>
-        <p class="receipt-slogan">SiraShop - Système de Gestion Commerciale (Mali)</p>
+        <p class="receipt-slogan">SiraShop - Système de Gestion Commerciale & SAV (Mali)</p>
         <div class="barcode-placeholder">
           ||||| | |||| ||| |||||| |||| |||||
         </div>
@@ -97,7 +152,7 @@
         Fermer
       </button>
       <button type="button" class="btn-action-print" (click)="print()">
-        🖨️ Imprimer le Reçu / Ticket
+        🖨️ Imprimer la Fiche / Reçu
       </button>
     </div>
   </div>

@@ -109,7 +109,7 @@
             <label class="input-label">Technicien Assigné :</label>
             <select [(ngModel)]="selectedTechnicianId">
               <option [ngValue]="null">Aucun (En attente d'attribution)</option>
-              <option *ngFor="let t of technicians" [value]="t.id">{{ t.username }}</option>
+              <option *ngFor="let t of technicians" [value]="t.id">{{ getUserDisplayName(t) }}</option>
             </select>
 
             <button (click)="createTicket()">Créer le Ticket de Réparation</button>
@@ -132,6 +132,11 @@
                 <strong>Description de la panne :</strong> {{ t.issueDescription || 'Non spécifiée' }}
               </div>
 
+              <div class="ticket-tech">
+                <strong>🛠️ Technicien : </strong>
+                <span class="tech-name-tag">{{ getTechnicianDisplayName(t) }}</span>
+              </div>
+
               <div class="ticket-financials">
                 <span>Coût estimé : <strong>{{ t.estimatedPrice | fcfa }}</strong></span>
                 <span class="margin-left">Acompte : <strong class="deposit">{{ t.depositAmount | fcfa }}</strong></span>
@@ -152,6 +157,9 @@
                 </div>
 
                 <div class="payment-action-btns">
+                  <button class="btn-print-receipt" (click)="printTicketReceipt(t)" title="Imprimer la fiche de prise en charge SAV">
+                    🖨️ Reçu SAV
+                  </button>
                   <button *ngIf="(t.estimatedPrice || 0) - (t.depositAmount || 0) > 0" class="btn-pay-full" (click)="payInFull(t)" title="Solder l'intégralité du paiement">
                     💳 Solder (Payé)
                   </button>
@@ -159,7 +167,7 @@
                     ➕ Versement
                   </button>
                   <span *ngIf="(t.estimatedPrice || 0) - (t.depositAmount || 0) <= 0" class="badge-fully-paid">
-                    ✅ Entièrement Payé
+                    ✅ Soldé
                   </span>
                 </div>
               </div>
@@ -173,4 +181,7 @@
       </div>
     </section>
   </main>
+
+  <!-- MODALE D'IMPRESSION DU TICKET DE CAISSE / RECU SAV -->
+  <app-receipt-modal></app-receipt-modal>
 </div>
